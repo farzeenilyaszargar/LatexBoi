@@ -293,7 +293,6 @@ export default function Editor() {
           <div className="statusbar preview-status"><span>Rendered just now</span><span>100%</span></div>
         </div>
       </section>
-      <footer className="footer"><span>Made for focused writing.</span><span>⌘ K <span className="footer-muted">Command menu</span></span></footer>
     </main>
   );
 }
