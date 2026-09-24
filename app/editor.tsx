@@ -333,7 +333,7 @@ export default function Editor() {
 
         <div className="pane preview-pane">
           <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><span className="live-pill"><span className="pulse" /> Live</span></div></div>
-          <div className="paper-frame" ref={paperFrameRef}><div className="paper-stack" style={{ zoom: paperScale }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
+          <div className="paper-frame" ref={paperFrameRef}><div className="paper-stack" style={{ zoom: paperScale, width: `${210 * paperScale}mm` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
           <div className="statusbar preview-status"><span>Rendered just now</span><span>100%</span></div>
         </div>
       </section>
