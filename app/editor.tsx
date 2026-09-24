@@ -131,6 +131,12 @@ function renderEnvironment(env: string, content: string, refs: Record<string, nu
   if (["bmatrix", "pmatrix", "vmatrix", "matrix"].includes(env)) return renderMath(`\\begin{${env}}${content}\\end{${env}}`, true);
   if (env === "tabular" || env === "tabularx") return renderTable(content, refs, citations);
   if (env === "figure") return `<figure class="figure-placeholder"><div class="image-placeholder">▧</div>${extractArgument(content, "caption") ? `<figcaption>${renderInline(extractArgument(content, "caption"), refs, citations)}</figcaption>` : ""}</figure>`;
+  if (env === "tikzpicture") {
+    const nodes: string[] = [];
+    content.replace(/\\node[\s\S]*?\(([A-Za-z0-9]+)\)[\s\S]*?\{([^}]*)\};/g, (_, id, label) => { nodes.push(`<span class="tikz-node" data-node="${id}">${escapeHtml(label)}</span>`); return ""; });
+    const arrows = (content.match(/\\draw\[[^\]]*\]\s*\([^)]+\)\s*--\s*\([^)]+\)/g) || []).length;
+    return `<div class="tikz-diagram">${nodes.join(arrows ? '<span class="tikz-arrow">→</span>' : "")}</div>`;
+  }
   if (env === "lstlisting") return `<pre class="code-block"><code>${escapeHtml(content.trim())}</code></pre>`;
   if (env === "algorithm" || env === "algorithmic") return `<div class="algorithm"><strong>${extractArgument(content, "caption") || "Algorithm"}</strong><pre>${escapeHtml(content.replace(/\\(Require|Ensure|For|If|EndIf|EndFor|State|Return)/g, "").trim())}</pre></div>`;
   if (["tcolorbox"].includes(env)) return `<aside class="color-box">${renderContent(content, refs, citations)}</aside>`;
@@ -139,7 +145,11 @@ function renderEnvironment(env: string, content: string, refs: Record<string, nu
   if (["theorem", "lemma", "definition", "proof"].includes(env)) return `<div class="theorem"><strong>${env[0].toUpperCase() + env.slice(1)}.</strong> ${renderContent(content, refs, citations)}</div>`;
   if (env === "center") return `<div class="centered">${renderContent(content, refs, citations)}</div>`;
   if (env === "abstract") return `<section class="abstract"><strong>Abstract</strong>${renderContent(content, refs, citations)}</section>`;
-  if (env === "thebibliography") return `<section class="bibliography"><h2>References</h2>${renderContent(content, refs, citations)}</section>`;
+  if (env === "thebibliography") {
+    const items: string[] = [];
+    content.replace(/\\bibitem\{([^}]*)\}([\s\S]*?)(?=\\bibitem\{|$)/g, (_, key, value) => { items.push(`<li id="${escapeHtml(key)}">${renderContent(value, refs, citations)}</li>`); return ""; });
+    return `<section class="bibliography"><h2>References</h2><ol>${items.join("")}</ol></section>`;
+  }
   return renderContent(content, refs, citations);
 }
 
@@ -172,6 +182,7 @@ function renderPlain(source: string, refs: Record<string, number>, citations: Re
   text = text.replace(/\\\$([^$]+)\$/g, (_, formula) => renderMath(formula));
   text = text.replace(/\\footnote\{([^{}]*)\}/g, (_, value) => `<sup class="footnote">†</sup><span class="footnote-text">${renderInline(value, refs, citations)}</span>`);
   text = text.replace(/\\includegraphics(?:\[[^\]]*\])?\{([^}]*)\}/g, (_, name) => `<div class="image-placeholder">▧ ${escapeHtml(name)}</div>`);
+  text = text.replace(/\\lipsum(?:\[([^\]]*)\])?/g, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer feugiat, nibh at facilisis volutpat, lectus neque consequat ipsum, vitae suscipit justo sem a justo.");
   text = text.replace(/\\(maketitle|tableofcontents|newpage|end\{document\}|begin\{document\})/g, "");
   text = text.replace(/\\section\*?\{([^}]*)\}/g, (_, title) => `<h2>${renderInline(title, refs, citations)}</h2>`);
   text = text.replace(/\\subsection\*?\{([^}]*)\}/g, (_, title) => `<h3>${renderInline(title, refs, citations)}</h3>`);
@@ -186,8 +197,10 @@ function renderLatex(source: string) {
   const author = extractArgument(source, "author");
   let body = source.replace(/^[\s\S]*?\\begin\{document\}/, "").replace(/\\end\{document\}[\s\S]*$/, "");
   body = body.replace(/\\title\{[^}]*\}|\\author\{[^}]*\}|\\date\{[^}]*\}/g, "");
+  const headings = [...body.matchAll(/\\section\*?\{([^}]*)\}/g)].map((match, index) => `<li>${index + 1}. ${renderInline(match[1], refs, citations)}</li>`).join("");
+  const toc = headings ? `<nav class="toc"><strong>Contents</strong><ol>${headings}</ol></nav>` : "";
   const header = title ? `<h1>${renderInline(title, refs, citations)}</h1><p class="author">${renderInline(author, refs, citations)}</p>` : "";
-  return header + renderContent(body, refs, citations);
+  return header + renderContent(body, refs, citations).replace(/<p><nav class="toc">[\s\S]*?<\/nav><\/p>/, "") + (body.includes("\\tableofcontents") ? toc : "");
 }
 
 export default function Editor() {
