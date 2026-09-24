@@ -305,11 +305,6 @@ export default function Editor() {
   }, [pages.length]);
 
   useEffect(() => {
-    const frame = paperFrameRef.current;
-    if (frame && paperScale > 1) frame.scrollLeft = Math.max(0, (frame.scrollWidth - frame.clientWidth) / 2);
-  }, [paperScale]);
-
-  useEffect(() => {
     const savedSource = window.localStorage.getItem("latexboi:source");
     const savedTheme = window.localStorage.getItem("latexboi:theme");
     if (savedSource) setSource(savedSource);
@@ -365,6 +360,27 @@ export default function Editor() {
     setPaperScale(Math.min(2, Math.max(0.55, next)));
   }
 
+  function zoomAtCursor(next: number, clientX: number, clientY: number) {
+    const frame = paperFrameRef.current;
+    if (!frame) return;
+    const previousScale = paperScale;
+    const nextScale = Math.min(2, Math.max(0.55, next));
+    if (nextScale === previousScale) return;
+    const bounds = frame.getBoundingClientRect();
+    const offsetX = clientX - bounds.left;
+    const offsetY = clientY - bounds.top;
+    const ratio = nextScale / previousScale;
+    const previousLeft = frame.scrollLeft;
+    const previousTop = frame.scrollTop;
+    setPreviewZoom(nextScale);
+    requestAnimationFrame(() => {
+      const updatedFrame = paperFrameRef.current;
+      if (!updatedFrame) return;
+      updatedFrame.scrollLeft = previousLeft + (offsetX - updatedFrame.clientWidth / 2) * (ratio - 1);
+      updatedFrame.scrollTop = (previousTop + offsetY) * ratio - offsetY;
+    });
+  }
+
   function resetPreviewZoom() {
     const frame = paperFrameRef.current;
     userZoomedRef.current = false;
@@ -407,7 +423,7 @@ export default function Editor() {
     if (!event.ctrlKey && !event.metaKey) return;
     event.stopPropagation();
     event.preventDefault();
-    setPreviewZoom(paperScale + (event.deltaY < 0 ? 0.1 : -0.1));
+    zoomAtCursor(paperScale + (event.deltaY < 0 ? 0.1 : -0.1), event.clientX, event.clientY);
   }
 
   return (
