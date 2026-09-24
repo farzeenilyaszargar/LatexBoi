@@ -190,6 +190,8 @@ function renderPlain(source: string, refs: Record<string, number>, citations: Re
   text = text.replace(/\\subsubsection\*?\{([^}]*)\}/g, (_, title) => `<h4>${renderInline(title, refs, citations)}</h4>`);
   const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
   return blocks.map((block) => {
+    const restored = block.replace(/@@DISPLAY(\d+)@@/g, (_, index) => displayMath[Number(index)]);
+    if (block.trim().startsWith("<")) return restored;
     const rendered = renderInline(block, refs, citations).replace(/@@DISPLAY(\d+)@@/g, (_, index) => displayMath[Number(index)]);
     return block.trim().startsWith("@@DISPLAY") ? rendered : `<p>${rendered.replace(/\n/g, "<br />")}</p>`;
   }).join("");
