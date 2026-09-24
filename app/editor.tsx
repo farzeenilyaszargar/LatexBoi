@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Download, FileText, Moon, Play, RotateCcw, Sun } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { Copy, Download, FileText, Minus, Moon, Play, Plus, RotateCcw, Sun } from "lucide-react";
 import katex from "katex";
 
 import "katex/dist/katex.min.css";
@@ -274,6 +274,9 @@ export default function Editor() {
   const [paperScale, setPaperScale] = useState(1);
   const [split, setSplit] = useState(50);
   const [draggingDivider, setDraggingDivider] = useState(false);
+  const [panningPreview, setPanningPreview] = useState(false);
+  const userZoomedRef = useRef(false);
+  const panRef = useRef({ x: 0, y: 0, left: 0, top: 0 });
   const highlightRef = useRef<HTMLPreElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const paperFrameRef = useRef<HTMLDivElement>(null);
@@ -285,7 +288,7 @@ export default function Editor() {
   useEffect(() => {
     const repaginate = () => {
       const frame = paperFrameRef.current;
-      if (frame) setPaperScale(Math.min(1, Math.max(0.55, (frame.clientWidth - 40) / 793.7)));
+      if (frame && !userZoomedRef.current) setPaperScale(Math.min(1, Math.max(0.55, (frame.clientWidth - 40) / 793.7)));
       setPages(paginateHtml(html, frame));
     };
     repaginate();
@@ -325,6 +328,32 @@ export default function Editor() {
     setSplit(Math.min(70, Math.max(30, next)));
   }
 
+  function setPreviewZoom(next: number) {
+    userZoomedRef.current = true;
+    setPaperScale(Math.min(2, Math.max(0.55, next)));
+  }
+
+  function resetPreviewZoom() {
+    const frame = paperFrameRef.current;
+    userZoomedRef.current = false;
+    setPaperScale(frame ? Math.min(1, Math.max(0.55, (frame.clientWidth - 40) / 793.7)) : 1);
+  }
+
+  function startPreviewPan(event: PointerEvent<HTMLDivElement>) {
+    const frame = paperFrameRef.current;
+    if (!frame) return;
+    panRef.current = { x: event.clientX, y: event.clientY, left: frame.scrollLeft, top: frame.scrollTop };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setPanningPreview(true);
+  }
+
+  function movePreviewPan(event: PointerEvent<HTMLDivElement>) {
+    const frame = paperFrameRef.current;
+    if (!panningPreview || !frame) return;
+    frame.scrollLeft = panRef.current.left - (event.clientX - panRef.current.x);
+    frame.scrollTop = panRef.current.top - (event.clientY - panRef.current.y);
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -343,8 +372,8 @@ export default function Editor() {
         <div className="divider" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview" aria-valuemin={30} aria-valuemax={70} aria-valuenow={Math.round(split)} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); setDraggingDivider(true); moveDivider(event.clientX); }} onPointerMove={(event) => { if (draggingDivider) moveDivider(event.clientX); }} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setDraggingDivider(false); }} onPointerCancel={() => setDraggingDivider(false)} />
 
         <div className="pane preview-pane">
-          <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><span className="live-pill"><span className="pulse" /> Live</span></div></div>
-          <div className="paper-frame" ref={paperFrameRef}><div className="paper-stack" style={{ zoom: paperScale, width: `${210 * paperScale}mm` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
+          <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale - 0.1)} title="Zoom out" aria-label="Zoom out"><Minus size={13} /></button><button className="zoom-level" onClick={resetPreviewZoom} title="Fit preview to pane">{Math.round(paperScale * 100)}%</button><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale + 0.1)} title="Zoom in" aria-label="Zoom in"><Plus size={13} /></button><span className="live-pill"><span className="pulse" /> Live</span></div></div>
+          <div className={`paper-frame${panningPreview ? " is-panning" : ""}`} ref={paperFrameRef} onPointerDown={startPreviewPan} onPointerMove={movePreviewPan} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setPanningPreview(false); }} onPointerCancel={() => setPanningPreview(false)}><div className="paper-stack" style={{ zoom: paperScale, width: `${210 * paperScale}mm` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
           <div className="statusbar preview-status"><span>Rendered just now</span><span>100%</span></div>
         </div>
       </section>
