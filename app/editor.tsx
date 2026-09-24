@@ -222,8 +222,8 @@ function renderLatex(source: string) {
   return header + renderContent(body, refs, citations).replace(/<p><nav class="toc">[\s\S]*?<\/nav><\/p>/, "") + (body.includes("\\tableofcontents") ? toc : "");
 }
 
-function highlightLatex(source: string) {
-  return source.split("\n").map((line) => {
+function highlightLatex(source: string, activeLine = -1) {
+  return source.split("\n").map((line, index) => {
     const commentStart = line.indexOf("%");
     const code = commentStart >= 0 ? line.slice(0, commentStart) : line;
     const comment = commentStart >= 0 ? line.slice(commentStart) : "";
@@ -231,7 +231,7 @@ function highlightLatex(source: string) {
       if (token.startsWith("\\")) return `<span class="syntax-command">${token}</span>`;
       return `<span class="syntax-bracket">${token}</span>`;
     });
-    return `${highlighted}${comment ? `<span class="syntax-comment">${escapeHtml(comment)}</span>` : ""}`;
+    return `<span class="code-line${index === activeLine ? " active" : ""}">${highlighted}${comment ? `<span class="syntax-comment">${escapeHtml(comment)}</span>` : ""}</span>`;
   }).join("\n");
 }
 
@@ -272,6 +272,7 @@ export default function Editor() {
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [paperScale, setPaperScale] = useState(1);
+  const [activeLine, setActiveLine] = useState(0);
   const [split, setSplit] = useState(50);
   const [draggingDivider, setDraggingDivider] = useState(false);
   const [panningPreview, setPanningPreview] = useState(false);
@@ -283,7 +284,7 @@ export default function Editor() {
   const [copied, setCopied] = useState(false);
   const html = useMemo(() => renderLatex(source), [source]);
   const [pages, setPages] = useState<string[]>([html]);
-  const highlightedSource = useMemo(() => highlightLatex(source), [source]);
+  const highlightedSource = useMemo(() => highlightLatex(source, activeLine), [source, activeLine]);
 
   useEffect(() => {
     const repaginate = () => {
@@ -328,6 +329,10 @@ export default function Editor() {
     setSplit(Math.min(70, Math.max(30, next)));
   }
 
+  function updateActiveLine(selectionStart: number) {
+    setActiveLine(source.slice(0, selectionStart).split("\n").length - 1);
+  }
+
   function setPreviewZoom(next: number) {
     userZoomedRef.current = true;
     setPaperScale(Math.min(2, Math.max(0.55, next)));
@@ -365,7 +370,7 @@ export default function Editor() {
       <section className={`workspace${draggingDivider ? " is-resizing" : ""}`} style={{ gridTemplateColumns: `minmax(0, ${split}fr) 8px minmax(0, ${100 - split}fr)` }}>
         <div className="pane editor-pane">
           <div className="pane-header"><div className="pane-title"><FileText size={15} /> main.tex</div><div className="pane-actions"><span className="language-pill">LaTeX</span><button className="small-button" onClick={() => { setSource(STARTER); window.localStorage.removeItem("latexboi:source"); }} title="Reset document"><RotateCcw size={14} /></button></div></div>
-          <div className="editor-wrap"><div className="line-numbers" ref={lineNumbersRef}>{source.split("\n").map((_, index) => <span key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea wrap="soft" spellCheck={false} value={source} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.scrollTop = event.currentTarget.scrollTop; highlightRef.current.scrollLeft = event.currentTarget.scrollLeft; } if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop; }} onChange={(event) => setSource(event.target.value)} aria-label="LaTeX source editor" /></div></div>
+          <div className="editor-wrap"><div className="line-numbers" ref={lineNumbersRef}>{source.split("\n").map((_, index) => <span className={index === activeLine ? "active" : ""} key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea wrap="soft" spellCheck={false} value={source} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.scrollTop = event.currentTarget.scrollTop; highlightRef.current.scrollLeft = event.currentTarget.scrollLeft; } if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop; }} onSelect={(event) => updateActiveLine(event.currentTarget.selectionStart)} onClick={(event) => updateActiveLine(event.currentTarget.selectionStart)} onKeyUp={(event) => updateActiveLine(event.currentTarget.selectionStart)} onChange={(event) => { setSource(event.target.value); updateActiveLine(event.target.selectionStart); }} aria-label="LaTeX source editor" /></div></div>
           <div className="statusbar"><span><span className="status-dot" /> Ready</span><span>{source.length} characters</span></div>
         </div>
 
