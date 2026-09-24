@@ -235,8 +235,8 @@ function paginateHtml(html: string, frame: HTMLElement | null) {
   const blocks = Array.from(container.childNodes).map((node) => node instanceof HTMLElement ? node.outerHTML : escapeHtml(node.textContent || "")).filter(Boolean);
   if (blocks.length === 0) return [html];
 
-  const frameWidth = Math.max(280, frame.clientWidth - 60);
-  const pageWidth = Math.min(frameWidth, 793.7);
+  // Keep screen pagination and print pagination on the same physical A4 canvas.
+  const pageWidth = 793.7;
   const pageHeight = pageWidth * 297 / 210;
   const measure = document.createElement("article");
   measure.className = "paper";
