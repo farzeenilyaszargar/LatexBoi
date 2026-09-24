@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Download, FileText, Play, RotateCcw, Sparkles } from "lucide-react";
 import katex from "katex";
 
@@ -203,6 +203,19 @@ function renderLatex(source: string) {
   return header + renderContent(body, refs, citations).replace(/<p><nav class="toc">[\s\S]*?<\/nav><\/p>/, "") + (body.includes("\\tableofcontents") ? toc : "");
 }
 
+function highlightLatex(source: string) {
+  return source.split("\n").map((line) => {
+    const commentStart = line.indexOf("%");
+    const code = commentStart >= 0 ? line.slice(0, commentStart) : line;
+    const comment = commentStart >= 0 ? line.slice(commentStart) : "";
+    const highlighted = escapeHtml(code).replace(/(\\[a-zA-Z@]+|[{}\[\]])/g, (token) => {
+      if (token.startsWith("\\")) return `<span class="syntax-command">${token}</span>`;
+      return `<span class="syntax-bracket">${token}</span>`;
+    });
+    return `${highlighted}${comment ? `<span class="syntax-comment">${escapeHtml(comment)}</span>` : ""}`;
+  }).join("\n");
+}
+
 function splitHtmlIntoPages(html: string) {
   if (typeof document === "undefined") return [html];
   const container = document.createElement("div");
@@ -235,9 +248,11 @@ function splitHtmlIntoPages(html: string) {
 export default function Editor() {
   const [source, setSource] = useState(STARTER);
   const [hydrated, setHydrated] = useState(false);
+  const highlightRef = useRef<HTMLPreElement>(null);
   const [copied, setCopied] = useState(false);
   const html = useMemo(() => renderLatex(source), [source]);
   const pages = useMemo(() => splitHtmlIntoPages(html), [html]);
+  const highlightedSource = useMemo(() => highlightLatex(source), [source]);
 
   useEffect(() => {
     const savedSource = window.localStorage.getItem("latexboi:source");
@@ -266,7 +281,7 @@ export default function Editor() {
       <section className="workspace">
         <div className="pane editor-pane">
           <div className="pane-header"><div className="pane-title"><FileText size={15} /> main.tex</div><div className="pane-actions"><span className="language-pill">LaTeX</span><button className="small-button" onClick={() => { setSource(STARTER); window.localStorage.removeItem("latexboi:source"); }} title="Reset document"><RotateCcw size={14} /></button></div></div>
-          <div className="editor-wrap"><div className="line-numbers">{source.split("\n").map((_, index) => <span key={index}>{index + 1}</span>)}</div><textarea spellCheck={false} value={source} onChange={(event) => setSource(event.target.value)} aria-label="LaTeX source editor" /></div>
+          <div className="editor-wrap"><div className="line-numbers">{source.split("\n").map((_, index) => <span key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea spellCheck={false} value={source} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.scrollTop = event.currentTarget.scrollTop; highlightRef.current.scrollLeft = event.currentTarget.scrollLeft; } }} onChange={(event) => setSource(event.target.value)} aria-label="LaTeX source editor" /></div></div>
           <div className="statusbar"><span><span className="status-dot" /> Ready</span><span>{source.length} characters</span></div>
         </div>
 
