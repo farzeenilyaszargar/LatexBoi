@@ -264,6 +264,7 @@ export default function Editor() {
   const [source, setSource] = useState(STARTER);
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [paperScale, setPaperScale] = useState(1);
   const highlightRef = useRef<HTMLPreElement>(null);
   const paperFrameRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -272,7 +273,11 @@ export default function Editor() {
   const highlightedSource = useMemo(() => highlightLatex(source), [source]);
 
   useEffect(() => {
-    const repaginate = () => setPages(paginateHtml(html, paperFrameRef.current));
+    const repaginate = () => {
+      const frame = paperFrameRef.current;
+      if (frame) setPaperScale(Math.min(1, Math.max(0.55, (frame.clientWidth - 40) / 793.7)));
+      setPages(paginateHtml(html, frame));
+    };
     repaginate();
     const observer = typeof ResizeObserver !== "undefined" && paperFrameRef.current ? new ResizeObserver(repaginate) : null;
     if (observer && paperFrameRef.current) observer.observe(paperFrameRef.current);
@@ -321,7 +326,7 @@ export default function Editor() {
 
         <div className="pane preview-pane">
           <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><span className="live-pill"><span className="pulse" /> Live</span></div></div>
-          <div className="paper-frame" ref={paperFrameRef}><div className="paper-stack">{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
+          <div className="paper-frame" ref={paperFrameRef}><div className="paper-stack" style={{ zoom: paperScale }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
           <div className="statusbar preview-status"><span>Rendered just now</span><span>100%</span></div>
         </div>
       </section>
