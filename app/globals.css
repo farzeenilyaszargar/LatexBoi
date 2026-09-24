@@ -39,6 +39,7 @@ textarea { flex:1; min-width:0; resize:none; padding:18px 16px; outline:none; bo
 .code-editor pre { color:#4b4c51; }.syntax-command { color:#a05a82; }.syntax-comment { color:#9b9a8f; }.syntax-bracket { color:#c17b42; } [data-theme="dark"] .code-editor pre { color:#d9dbe0; } [data-theme="dark"] .syntax-command { color:#e7a3c4; } [data-theme="dark"] .syntax-comment { color:#858b96; } [data-theme="dark"] .syntax-bracket { color:#f1b17c; }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
 .paper h1 { font-size:28px; }
+.paper .author { margin:8px 0 36px; font-size:13px; line-height:1.55; }
 .abstract { font-size:13px; line-height:1.5; }
 .abstract strong { font-size:13px; }
 .paper-frame { background:color-mix(in srgb, var(--canvas) 94%, #000 6%); }
