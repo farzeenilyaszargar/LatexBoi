@@ -207,8 +207,14 @@ function renderLatex(source: string) {
   body = body.replace(/\\title\{[^}]*\}|\\author\{[^}]*\}|\\date\{[^}]*\}/g, "");
   let sectionNumber = 0;
   let subsectionNumber = 0;
-  body = body.replace(/\\section(\*)?\{([^}]*)\}/g, (_, star, heading) => star ? `\\section*{${heading}}` : `\\section{${++sectionNumber}\\quad ${heading}}`);
-  body = body.replace(/\\subsection(\*)?\{([^}]*)\}/g, (_, star, heading) => star ? `\\subsection*{${heading}}` : `\\subsection{${sectionNumber}.${++subsectionNumber}\\quad ${heading}}`);
+  body = body.replace(/\\(section|subsection)(\*)?\{([^}]*)\}/g, (_, kind, star, heading) => {
+    if (kind === "section") {
+      sectionNumber += 1;
+      subsectionNumber = 0;
+      return star ? `\\section*{${heading}}` : `\\section{${sectionNumber}\\quad ${heading}}`;
+    }
+    return star ? `\\subsection*{${heading}}` : `\\subsection{${sectionNumber}.${++subsectionNumber}\\quad ${heading}}`;
+  });
   const headings = [...body.matchAll(/\\section\*?\{([^}]*)\}/g)].map((match, index) => `<li>${index + 1}. ${renderInline(match[1], refs, citations)}</li>`).join("");
   const toc = headings ? `<nav class="toc"><strong>Contents</strong><ol>${headings}</ol></nav>` : "";
   const header = title ? `<h1>${renderInline(title, refs, citations)}</h1><p class="author">${renderInline(author, refs, citations)}${date ? `<br /><span class="date">${renderInline(date, refs, citations)}</span>` : ""}</p>` : "";
