@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Download, FileText, Play, RotateCcw, Sparkles } from "lucide-react";
+import { Copy, Download, FileText, Moon, Play, RotateCcw, Sparkles, Sun } from "lucide-react";
 import katex from "katex";
 
 import "katex/dist/katex.min.css";
@@ -263,6 +263,7 @@ function paginateHtml(html: string, frame: HTMLElement | null) {
 export default function Editor() {
   const [source, setSource] = useState(STARTER);
   const [hydrated, setHydrated] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const highlightRef = useRef<HTMLPreElement>(null);
   const paperFrameRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -280,9 +281,16 @@ export default function Editor() {
 
   useEffect(() => {
     const savedSource = window.localStorage.getItem("latexboi:source");
+    const savedTheme = window.localStorage.getItem("latexboi:theme");
     if (savedSource) setSource(savedSource);
+    if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
     setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    if (hydrated) window.localStorage.setItem("latexboi:theme", theme);
+  }, [hydrated, theme]);
 
   useEffect(() => {
     if (hydrated) window.localStorage.setItem("latexboi:source", source);
@@ -299,7 +307,7 @@ export default function Editor() {
       <header className="topbar">
         <div className="brand"><span className="brand-mark"><Sparkles size={15} strokeWidth={2.5} /></span><span>LatexBoi</span></div>
         <div className="topbar-center"><span className="dot" /> Untitled document <span className="saved">Saved locally</span></div>
-        <div className="topbar-actions"><button className="icon-button" onClick={copySource} title="Copy source"><Copy size={16} />{copied ? "Copied" : "Copy"}</button><button className="primary-button" onClick={() => window.print()}><Download size={16} /> Export PDF</button></div>
+        <div className="topbar-actions"><button className="icon-button" onClick={copySource} title="Copy source"><Copy size={16} />{copied ? "Copied" : "Copy"}</button><button className="icon-button theme-button" onClick={() => setTheme((current) => current === "light" ? "dark" : "light")} title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</button><button className="primary-button" onClick={() => window.print()}><Download size={16} /> Export PDF</button></div>
       </header>
 
       <section className="workspace">
