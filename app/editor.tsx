@@ -178,8 +178,9 @@ function renderContent(source: string, refs: Record<string, number>, citations: 
 
 function renderPlain(source: string, refs: Record<string, number>, citations: Record<string, number>) {
   let text = source.replace(/%[^\n]*/g, "").replace(/\\(documentclass|usepackage|newtheorem|definecolor|setlength|pagestyle|fancyhf|fancyhead|fancyfoot|lstset|vspace|hspace|columnbreak|centering|label)\b(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, "");
-  text = text.replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => `<div class="math-display">${renderMath(formula, true)}</div>`);
-  text = text.replace(/\\\$([^$]+)\$/g, (_, formula) => renderMath(formula));
+  const displayMath: string[] = [];
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => { displayMath.push(`<div class="math-display">${renderMath(formula, true)}</div>`); return `@@DISPLAY${displayMath.length - 1}@@`; });
+  text = text.replace(/\\\$([^$]+)\$/g, (_, formula) => { displayMath.push(renderMath(formula)); return `@@DISPLAY${displayMath.length - 1}@@`; });
   text = text.replace(/\\footnote\{([^{}]*)\}/g, (_, value) => `<sup class="footnote">†</sup><span class="footnote-text">${renderInline(value, refs, citations)}</span>`);
   text = text.replace(/\\includegraphics(?:\[[^\]]*\])?\{([^}]*)\}/g, (_, name) => `<div class="image-placeholder">▧ ${escapeHtml(name)}</div>`);
   text = text.replace(/\\lipsum(?:\[([^\]]*)\])?/g, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer feugiat, nibh at facilisis volutpat, lectus neque consequat ipsum, vitae suscipit justo sem a justo.");
@@ -188,7 +189,10 @@ function renderPlain(source: string, refs: Record<string, number>, citations: Re
   text = text.replace(/\\subsection\*?\{([^}]*)\}/g, (_, title) => `<h3>${renderInline(title, refs, citations)}</h3>`);
   text = text.replace(/\\subsubsection\*?\{([^}]*)\}/g, (_, title) => `<h4>${renderInline(title, refs, citations)}</h4>`);
   const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
-  return blocks.map((block) => block.startsWith("<") ? block : `<p>${renderInline(block, refs, citations).replace(/\n/g, "<br />")}</p>`).join("");
+  return blocks.map((block) => {
+    const rendered = renderInline(block, refs, citations).replace(/@@DISPLAY(\d+)@@/g, (_, index) => displayMath[Number(index)]);
+    return block.trim().startsWith("@@DISPLAY") ? rendered : `<p>${rendered.replace(/\n/g, "<br />")}</p>`;
+  }).join("");
 }
 
 function renderLatex(source: string) {
@@ -274,7 +278,7 @@ export default function Editor() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand"><span className="brand-mark"><Sparkles size={15} strokeWidth={2.5} /></span><span>LatexBoi</span></div>
-        <div className="topbar-center"><span className="dot" /> Untitled document <span className="saved">{hydrated ? "Saved locally" : "Loading…"}</span></div>
+        <div className="topbar-center"><span className="dot" /> Untitled document <span className="saved">Saved locally</span></div>
         <div className="topbar-actions"><button className="icon-button" onClick={copySource} title="Copy source"><Copy size={16} />{copied ? "Copied" : "Copy"}</button><button className="primary-button" onClick={() => window.print()}><Download size={16} /> Export PDF</button></div>
       </header>
 
