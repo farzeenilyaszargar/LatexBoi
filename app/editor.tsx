@@ -194,7 +194,8 @@ function renderPlain(source: string, refs: Record<string, number>, citations: Re
     const restored = block.replace(/@@DISPLAY(\d+)@@/g, (_, index) => displayMath[Number(index)]);
     if (block.trim().startsWith("<")) return restored;
     const rendered = renderInline(block, refs, citations).replace(/@@DISPLAY(\d+)@@/g, (_, index) => displayMath[Number(index)]);
-    return block.trim().startsWith("@@DISPLAY") ? rendered : `<p>${rendered.replace(/\n/g, "<br />")}</p>`;
+    const isKeywords = /\\textbf\{Keywords:\}/i.test(block);
+    return block.trim().startsWith("@@DISPLAY") ? rendered : `<p${isKeywords ? ' class="keywords"' : ""}>${rendered.replace(/\n/g, isKeywords ? " " : "<br />")}</p>`;
   }).join("");
 }
 
