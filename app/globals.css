@@ -9,7 +9,7 @@ button { cursor:pointer; }
 .app-shell { height:100vh; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
 .topbar { height:48px; flex:none; padding:0 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); background:color-mix(in srgb, var(--surface) 82%, transparent); }
 .brand { display:flex; align-items:center; gap:7px; font-weight:700; letter-spacing:-.03em; font-size:15px; min-width:170px; }
-.brand-mark { width:23px; height:23px; display:grid; place-items:center; border-radius:7px; color:#fff; background:var(--accent); }
+.brand-mark { width:23px; height:23px; display:grid; place-items:center; overflow:hidden; border-radius:7px; background:transparent; }.brand-logo { display:block; width:23px; height:23px; object-fit:cover; }.logo-light { filter:invert(1); }.logo-dark { filter:none; }
 .topbar-center { color:#5c5b60; font-size:13px; display:flex; align-items:center; gap:8px; }
 .dot { width:6px; height:6px; border-radius:50%; background:#76a578; }.saved { color:#a1a0a0; margin-left:7px; }
 .topbar-actions { min-width:170px; display:flex; justify-content:flex-end; gap:6px; }.topbar-actions .icon-button,.topbar-actions .primary-button { padding:5px 8px; font-size:11px; }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Download, FileText, Moon, Play, RotateCcw, Sparkles, Sun } from "lucide-react";
+import { Copy, Download, FileText, Moon, Play, RotateCcw, Sun } from "lucide-react";
 import katex from "katex";
 
 import "katex/dist/katex.min.css";
@@ -310,7 +310,7 @@ export default function Editor() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div className="brand"><span className="brand-mark"><Sparkles size={15} strokeWidth={2.5} /></span><span>LatexBoi</span></div>
+        <div className="brand"><span className="brand-mark"><img className={`brand-logo ${theme === "light" ? "logo-light" : "logo-dark"}`} src="/latexboi-logo.png" alt="" /></span><span>LatexBoi</span></div>
         <div className="topbar-center"><span className="dot" /> Untitled document <span className="saved">Saved locally</span></div>
         <div className="topbar-actions"><button className="icon-button" onClick={copySource} title="Copy source"><Copy size={16} />{copied ? "Copied" : "Copy"}</button><button className="icon-button theme-button" onClick={() => setTheme((current) => current === "light" ? "dark" : "light")} title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</button><button className="primary-button" onClick={() => window.print()}><Download size={16} /> Export PDF</button></div>
       </header>
