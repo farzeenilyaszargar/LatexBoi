@@ -27,34 +27,167 @@ Write on the left. Your document appears on the right as you type.
 
 \end{document}`;
 
-function renderInline(text: string) {
-  return text.replace(/\\\((.+?)\\\)/g, (_, formula) => {
-    try { return katex.renderToString(formula, { throwOnError: false }); } catch { return formula; }
+const escapeHtml = (value: string) => value
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+
+function findMatchingEnvironment(source: string, start: number, env: string) {
+  const token = new RegExp(`\\\\(begin|end)\\{${env}\\}`, "g");
+  const opening = token.exec(source.slice(start));
+  if (!opening) return { content: source.slice(start), end: source.length };
+  token.lastIndex = start;
+  let depth = 0;
+  let match: RegExpExecArray | null;
+  while ((match = token.exec(source))) {
+    if (match[1] === "begin") depth += 1;
+    else {
+      depth -= 1;
+      if (depth === 0) return { content: source.slice(start + opening[0].length, token.lastIndex - match[0].length), end: token.lastIndex };
+    }
+  }
+  return { content: source.slice(start), end: source.length };
+}
+
+function replaceBraced(text: string, command: string, render: (value: string) => string) {
+  const pattern = new RegExp(`\\\\${command}\\{([^{}]*)\\}`, "g");
+  let result = text;
+  for (let i = 0; i < 5; i += 1) result = result.replace(pattern, (_, value) => render(value));
+  return result;
+}
+
+function renderMath(formula: string, display = false) {
+  try { return katex.renderToString(formula.trim(), { displayMode: display, throwOnError: false }); }
+  catch { return `<code>${escapeHtml(formula)}</code>`; }
+}
+
+function renderInline(text: string, refs: Record<string, number>, citations: Record<string, number>) {
+  const math: string[] = [];
+  let value = text
+    .replace(/%[^\n]*/g, "")
+    .replace(/\\\((.+?)\\\)/g, (_, formula) => { math.push(renderMath(formula)); return `@@MATH${math.length - 1}@@`; })
+    .replace(/\\LaTeX\{?\}?/g, "LaTeX")
+    .replace(/\\today/g, new Date().toLocaleDateString())
+    .replace(/~+/g, " ");
+  value = escapeHtml(value);
+  value = replaceBraced(value, "textbf", (v) => `<strong>${v}</strong>`);
+  value = replaceBraced(value, "textit", (v) => `<em>${v}</em>`);
+  value = replaceBraced(value, "underline", (v) => `<u>${v}</u>`);
+  value = replaceBraced(value, "texttt", (v) => `<code>${v}</code>`);
+  value = replaceBraced(value, "textsc", (v) => `<span class="small-caps">${v}</span>`);
+  value = replaceBraced(value, "emph", (v) => `<em>${v}</em>`);
+  value = replaceBraced(value, "color", (v) => `<span style="color:${v}">${v}</span>`);
+  value = value.replace(/\\color\{([^{}]+)\}\{([^{}]*)\}/g, '<span style="color:$1">$2</span>');
+  value = value.replace(/\\href\{([^{}]+)\}\{([^{}]*)\}/g, '<a href="$1" target="_blank" rel="noreferrer">$2</a>');
+  value = value.replace(/\\url\{([^{}]+)\}/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>');
+  value = value.replace(/\\ref\{([^{}]+)\}/g, (_, key) => `<a class="reference">${refs[key] ?? "?"}</a>`);
+  value = value.replace(/\\cite\{([^{}]+)\}/g, (_, key) => `<sup class="citation">[${citations[key] ?? "?"}]</sup>`);
+  value = value.replace(/\\(quad|qquad|,|;|!)/g, " ");
+  value = value.replace(/\\([#%&_{}$])/g, "$1");
+  return value.replace(/@@MATH(\d+)@@/g, (_, index) => math[Number(index)]);
+}
+
+function extractLabels(source: string) {
+  const refs: Record<string, number> = {};
+  let section = 0;
+  source.replace(/\\section(?:\*)?\{([^}]*)\}|\\label\{([^}]*)\}/g, (_, title, label) => {
+    if (title) section += 1;
+    if (label) refs[label] = section;
+    return "";
   });
+  const citations: Record<string, number> = {};
+  let citation = 0;
+  source.replace(/\\bibitem\{([^}]*)\}/g, (_, key) => { citations[key] = ++citation; return ""; });
+  return { refs, citations };
+}
+
+function renderTable(content: string, refs: Record<string, number>, citations: Record<string, number>) {
+  const rows = content.replace(/\\(toprule|midrule|bottomrule|hline|cline\{[^}]*\})/g, "").split(/\\\\/).map((row) => row.trim()).filter(Boolean);
+  return `<div class="table-scroll"><table>${rows.map((row) => {
+    const cells = row.split(/(?<!\\)&/).map((cell) => cell.trim()).filter(Boolean);
+    return `<tr>${cells.map((cell) => `<td>${renderInline(cell, refs, citations)}</td>`).join("")}</tr>`;
+  }).join("")}</table></div>`;
+}
+
+function renderList(content: string, ordered: boolean, refs: Record<string, number>, citations: Record<string, number>) {
+  const items: string[] = [];
+  let cursor = 0;
+  while (cursor < content.length) {
+    const match = /\\item(?:\[[^\]]*\])?/.exec(content.slice(cursor));
+    if (!match) break;
+    const start = cursor + match.index + match[0].length;
+    const next = /\\item(?:\[[^\]]*\])?/.exec(content.slice(start));
+    const end = next ? start + next.index : content.length;
+    items.push(renderContent(content.slice(start, end), refs, citations));
+    cursor = end;
+  }
+  return `<${ordered ? "ol" : "ul"}>${items.map((item) => `<li>${item.trim()}</li>`).join("")}</${ordered ? "ol" : "ul"}>`;
+}
+
+function renderEnvironment(env: string, content: string, refs: Record<string, number>, citations: Record<string, number>) {
+  if (env === "itemize") return renderList(content, false, refs, citations);
+  if (env === "enumerate") return renderList(content, true, refs, citations);
+  if (["equation", "equation*"].includes(env)) return `<div class="math-display">${renderMath(content.replace(/\\label\{[^}]*\}/g, ""), true)}</div>`;
+  if (["align", "align*", "alignat", "alignat*"].includes(env)) return `<div class="math-display">${renderMath(content.replace(/\\label\{[^}]*\}/g, ""), true)}</div>`;
+  if (["bmatrix", "pmatrix", "vmatrix", "matrix"].includes(env)) return renderMath(`\\begin{${env}}${content}\\end{${env}}`, true);
+  if (env === "tabular" || env === "tabularx") return renderTable(content, refs, citations);
+  if (env === "figure") return `<figure class="figure-placeholder"><div class="image-placeholder">▧</div>${extractArgument(content, "caption") ? `<figcaption>${renderInline(extractArgument(content, "caption"), refs, citations)}</figcaption>` : ""}</figure>`;
+  if (env === "lstlisting") return `<pre class="code-block"><code>${escapeHtml(content.trim())}</code></pre>`;
+  if (env === "algorithm" || env === "algorithmic") return `<div class="algorithm"><strong>${extractArgument(content, "caption") || "Algorithm"}</strong><pre>${escapeHtml(content.replace(/\\(Require|Ensure|For|If|EndIf|EndFor|State|Return)/g, "").trim())}</pre></div>`;
+  if (["tcolorbox"].includes(env)) return `<aside class="color-box">${renderContent(content, refs, citations)}</aside>`;
+  if (["quote", "displayquote"].includes(env)) return `<blockquote>${renderContent(content, refs, citations)}</blockquote>`;
+  if (env === "multicols") return `<div class="columns">${renderContent(content, refs, citations)}</div>`;
+  if (["theorem", "lemma", "definition", "proof"].includes(env)) return `<div class="theorem"><strong>${env[0].toUpperCase() + env.slice(1)}.</strong> ${renderContent(content, refs, citations)}</div>`;
+  if (env === "center") return `<div class="centered">${renderContent(content, refs, citations)}</div>`;
+  if (env === "abstract") return `<section class="abstract"><strong>Abstract</strong>${renderContent(content, refs, citations)}</section>`;
+  if (env === "thebibliography") return `<section class="bibliography"><h2>References</h2>${renderContent(content, refs, citations)}</section>`;
+  return renderContent(content, refs, citations);
+}
+
+function extractArgument(content: string, command: string) {
+  const match = new RegExp(`\\\\${command}\\{([^}]*)\\}`).exec(content);
+  return match?.[1] ?? "";
+}
+
+function renderContent(source: string, refs: Record<string, number>, citations: Record<string, number>): string {
+  let output = "";
+  let cursor = 0;
+  const begin = /\\begin\{([a-zA-Z*]+)\}/g;
+  let match: RegExpExecArray | null;
+  while ((match = begin.exec(source))) {
+    const before = source.slice(cursor, match.index);
+    output += renderPlain(before, refs, citations);
+    const env = match[1];
+    const found = findMatchingEnvironment(source, match.index, env);
+    output += renderEnvironment(env, found.content, refs, citations);
+    cursor = found.end;
+    begin.lastIndex = cursor;
+  }
+  output += renderPlain(source.slice(cursor), refs, citations);
+  return output;
+}
+
+function renderPlain(source: string, refs: Record<string, number>, citations: Record<string, number>) {
+  let text = source.replace(/%[^\n]*/g, "").replace(/\\(documentclass|usepackage|newtheorem|definecolor|setlength|pagestyle|fancyhf|fancyhead|fancyfoot|lstset|vspace|hspace|columnbreak|centering|label)\b(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, "");
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => `<div class="math-display">${renderMath(formula, true)}</div>`);
+  text = text.replace(/\\\$([^$]+)\$/g, (_, formula) => renderMath(formula));
+  text = text.replace(/\\footnote\{([^{}]*)\}/g, (_, value) => `<sup class="footnote">†</sup><span class="footnote-text">${renderInline(value, refs, citations)}</span>`);
+  text = text.replace(/\\includegraphics(?:\[[^\]]*\])?\{([^}]*)\}/g, (_, name) => `<div class="image-placeholder">▧ ${escapeHtml(name)}</div>`);
+  text = text.replace(/\\(maketitle|tableofcontents|newpage|end\{document\}|begin\{document\})/g, "");
+  text = text.replace(/\\section\*?\{([^}]*)\}/g, (_, title) => `<h2>${renderInline(title, refs, citations)}</h2>`);
+  text = text.replace(/\\subsection\*?\{([^}]*)\}/g, (_, title) => `<h3>${renderInline(title, refs, citations)}</h3>`);
+  text = text.replace(/\\subsubsection\*?\{([^}]*)\}/g, (_, title) => `<h4>${renderInline(title, refs, citations)}</h4>`);
+  const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
+  return blocks.map((block) => block.startsWith("<") ? block : `<p>${renderInline(block, refs, citations).replace(/\n/g, "<br />")}</p>`).join("");
 }
 
 function renderLatex(source: string) {
-  const body = source
-    .replace(/\\documentclass(?:\[[^\]]*\])?\{[^}]*\}/g, "")
-    .replace(/\\usepackage(?:\[[^\]]*\])?\{[^}]*\}/g, "")
-    .replace(/\\title\{([^}]*)\}/g, '<h1>$1</h1>')
-    .replace(/\\author\{([^}]*)\}/g, '<p class="author">$1</p>')
-    .replace(/\\maketitle/g, "")
-    .replace(/\\section\{([^}]*)\}/g, '<h2>$1</h2>')
-    .replace(/\\subsection\{([^}]*)\}/g, '<h3>$1</h3>')
-    .replace(/\\begin\{document\}|\\end\{document\}/g, "")
-    .replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => {
-      try { return `<div class="math-display">${katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false })}</div>`; } catch { return `<pre>${formula}</pre>`; }
-    })
-    .replace(/\\begin\{equation\}([\s\S]*?)\\end\{equation\}/g, (_, formula) => {
-      try { return `<div class="math-display">${katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false })}</div>`; } catch { return `<pre>${formula}</pre>`; }
-    });
-
-  return body.split(/\n\s*\n/).map((block) => {
-    const trimmed = block.trim();
-    if (!trimmed || trimmed.startsWith("<h")) return trimmed;
-    return `<p>${renderInline(trimmed).replace(/\n/g, "<br />")}</p>`;
-  }).join("");
+  const { refs, citations } = extractLabels(source);
+  const title = extractArgument(source, "title");
+  const author = extractArgument(source, "author");
+  let body = source.replace(/^[\s\S]*?\\begin\{document\}/, "").replace(/\\end\{document\}[\s\S]*$/, "");
+  body = body.replace(/\\title\{[^}]*\}|\\author\{[^}]*\}|\\date\{[^}]*\}/g, "");
+  const header = title ? `<h1>${renderInline(title, refs, citations)}</h1><p class="author">${renderInline(author, refs, citations)}</p>` : "";
+  return header + renderContent(body, refs, citations);
 }
 
 export default function Editor() {
