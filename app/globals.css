@@ -5,6 +5,8 @@
 :root { --ink:#26272b; --muted:#8b8b90; --line:#e7e5e0; --surface:#ffffff; --paper:#fbfaf7; --paper-ink:#272727; --canvas:#f5f4f1; --accent:#e86f51; --blue:#5e7fae; }
 [data-theme="dark"] { --ink:#f1f0ed; --muted:#a3a5aa; --line:#35383e; --surface:#202226; --paper:#fbfaf7; --paper-ink:#272727; --canvas:#15171a; --accent:#f28a68; --blue:#91b4e4; color-scheme:dark; }
 * { box-sizing:border-box; }
+* { scrollbar-width:none; }
+*::-webkit-scrollbar { display:none; width:0; height:0; }
 html,body { margin:0; height:100%; overflow:hidden; background:var(--canvas); color:var(--ink); font-family:'DM Sans', sans-serif; transition:background-color .2s ease,color .2s ease; }
 button, textarea { font:inherit; }
 button { cursor:pointer; }
