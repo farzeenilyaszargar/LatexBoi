@@ -305,6 +305,11 @@ export default function Editor() {
   }, [pages.length]);
 
   useEffect(() => {
+    const frame = paperFrameRef.current;
+    if (frame && paperScale > 1) frame.scrollLeft = Math.max(0, (frame.scrollWidth - frame.clientWidth) / 2);
+  }, [paperScale]);
+
+  useEffect(() => {
     const savedSource = window.localStorage.getItem("latexboi:source");
     const savedTheme = window.localStorage.getItem("latexboi:theme");
     if (savedSource) setSource(savedSource);
@@ -408,7 +413,7 @@ export default function Editor() {
 
         <div className="pane preview-pane">
           <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><span className="page-indicator">Page {viewedPage} of {pages.length}</span><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale - 0.1)} title="Zoom out" aria-label="Zoom out"><Minus size={13} /></button><button className="zoom-level" onClick={resetPreviewZoom} title="Fit preview to pane">{Math.round(paperScale * 100)}%</button><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale + 0.1)} title="Zoom in" aria-label="Zoom in"><Plus size={13} /></button></div></div>
-          <div className={`paper-frame${panningPreview ? " is-panning" : ""}`} ref={paperFrameRef} title="Scroll to move · Ctrl/Cmd + scroll to zoom · Drag to pan" onScroll={updateViewedPage} onWheelCapture={zoomPreviewWithWheel} onPointerDown={startPreviewPan} onPointerMove={movePreviewPan} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setPanningPreview(false); }} onPointerCancel={() => setPanningPreview(false)}><div className="paper-stack" style={{ height: `${(pages.length * 297 + Math.max(0, pages.length - 1) * 5.82) * paperScale}mm` }}><div className="paper-canvas" style={{ transform: `scale(${paperScale})` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div></div>
+          <div className={`paper-frame${panningPreview ? " is-panning" : ""}`} ref={paperFrameRef} title="Scroll to move · Ctrl/Cmd + scroll to zoom · Drag to pan" onScroll={updateViewedPage} onWheelCapture={zoomPreviewWithWheel} onPointerDown={startPreviewPan} onPointerMove={movePreviewPan} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setPanningPreview(false); }} onPointerCancel={() => setPanningPreview(false)}><div className="paper-stack" style={{ width: `${210 * Math.max(1, paperScale)}mm`, height: `${(pages.length * 297 + Math.max(0, pages.length - 1) * 5.82) * paperScale}mm` }}><div className="paper-canvas" style={{ transform: `scale(${paperScale})` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div></div>
         </div>
       </section>
     </main>
