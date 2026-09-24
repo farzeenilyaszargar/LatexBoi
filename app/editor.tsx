@@ -272,6 +272,8 @@ export default function Editor() {
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [paperScale, setPaperScale] = useState(1);
+  const [split, setSplit] = useState(50);
+  const [draggingDivider, setDraggingDivider] = useState(false);
   const highlightRef = useRef<HTMLPreElement>(null);
   const paperFrameRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -314,6 +316,14 @@ export default function Editor() {
     window.setTimeout(() => setCopied(false), 1400);
   }
 
+  function moveDivider(clientX: number) {
+    const workspace = document.querySelector<HTMLElement>(".workspace");
+    if (!workspace) return;
+    const bounds = workspace.getBoundingClientRect();
+    const next = ((clientX - bounds.left) / bounds.width) * 100;
+    setSplit(Math.min(70, Math.max(30, next)));
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -322,14 +332,14 @@ export default function Editor() {
         <div className="topbar-actions"><button className="icon-button" onClick={copySource} title="Copy source"><Copy size={16} />{copied ? "Copied" : "Copy"}</button><button className="icon-button theme-button" onClick={() => setTheme((current) => current === "light" ? "dark" : "light")} title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</button><button className="primary-button" onClick={() => window.print()}><Download size={16} /> Export PDF</button></div>
       </header>
 
-      <section className="workspace">
+      <section className={`workspace${draggingDivider ? " is-resizing" : ""}`} style={{ gridTemplateColumns: `minmax(0, ${split}fr) 8px minmax(0, ${100 - split}fr)` }}>
         <div className="pane editor-pane">
           <div className="pane-header"><div className="pane-title"><FileText size={15} /> main.tex</div><div className="pane-actions"><span className="language-pill">LaTeX</span><button className="small-button" onClick={() => { setSource(STARTER); window.localStorage.removeItem("latexboi:source"); }} title="Reset document"><RotateCcw size={14} /></button></div></div>
           <div className="editor-wrap"><div className="line-numbers">{source.split("\n").map((_, index) => <span key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea wrap="soft" spellCheck={false} value={source} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.scrollTop = event.currentTarget.scrollTop; highlightRef.current.scrollLeft = event.currentTarget.scrollLeft; } }} onChange={(event) => setSource(event.target.value)} aria-label="LaTeX source editor" /></div></div>
           <div className="statusbar"><span><span className="status-dot" /> Ready</span><span>{source.length} characters</span></div>
         </div>
 
-        <div className="divider" />
+        <div className="divider" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview" aria-valuemin={30} aria-valuemax={70} aria-valuenow={Math.round(split)} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); setDraggingDivider(true); moveDivider(event.clientX); }} onPointerMove={(event) => { if (draggingDivider) moveDivider(event.clientX); }} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setDraggingDivider(false); }} onPointerCancel={() => setDraggingDivider(false)} />
 
         <div className="pane preview-pane">
           <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><span className="live-pill"><span className="pulse" /> Live</span></div></div>
