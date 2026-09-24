@@ -203,11 +203,41 @@ function renderLatex(source: string) {
   return header + renderContent(body, refs, citations).replace(/<p><nav class="toc">[\s\S]*?<\/nav><\/p>/, "") + (body.includes("\\tableofcontents") ? toc : "");
 }
 
+function splitHtmlIntoPages(html: string) {
+  if (typeof document === "undefined") return [html];
+  const container = document.createElement("div");
+  container.innerHTML = html;
+  const blocks = Array.from(container.childNodes).map((node) => node instanceof HTMLElement ? node.outerHTML : escapeHtml(node.textContent || "")).filter(Boolean);
+  if (blocks.length === 0) return [html];
+
+  const pages: string[] = [];
+  let page: string[] = [];
+  let weight = 0;
+  blocks.forEach((block) => {
+    const probe = document.createElement("div");
+    probe.innerHTML = block;
+    const element = probe.firstElementChild;
+    const textWeight = Math.max(1, Math.ceil((element?.textContent?.length || block.length) / 950));
+    const visualWeight = /math-display|table|figure|code-block|algorithm|color-box|tikz-diagram/.test(block) ? 2 : 0;
+    const blockWeight = textWeight + visualWeight;
+    if (page.length > 0 && weight + blockWeight > 8) {
+      pages.push(page.join(""));
+      page = [];
+      weight = 0;
+    }
+    page.push(block);
+    weight += blockWeight;
+  });
+  if (page.length) pages.push(page.join(""));
+  return pages;
+}
+
 export default function Editor() {
   const [source, setSource] = useState(STARTER);
   const [hydrated, setHydrated] = useState(false);
   const [copied, setCopied] = useState(false);
   const html = useMemo(() => renderLatex(source), [source]);
+  const pages = useMemo(() => splitHtmlIntoPages(html), [html]);
 
   useEffect(() => {
     const savedSource = window.localStorage.getItem("latexboi:source");
@@ -244,7 +274,7 @@ export default function Editor() {
 
         <div className="pane preview-pane">
           <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><span className="live-pill"><span className="pulse" /> Live</span></div></div>
-          <div className="paper-frame"><article className="paper" dangerouslySetInnerHTML={{ __html: html }} /></div>
+          <div className="paper-frame"><div className="paper-stack">{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
           <div className="statusbar preview-status"><span>Rendered just now</span><span>100%</span></div>
         </div>
       </section>
