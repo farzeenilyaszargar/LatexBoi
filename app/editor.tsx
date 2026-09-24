@@ -257,8 +257,12 @@ export default function Editor() {
   const highlightRef = useRef<HTMLPreElement>(null);
   const [copied, setCopied] = useState(false);
   const html = useMemo(() => renderLatex(source), [source]);
-  const pages = useMemo(() => splitHtmlIntoPages(html), [html]);
+  const [pages, setPages] = useState<string[]>([html]);
   const highlightedSource = useMemo(() => highlightLatex(source), [source]);
+
+  useEffect(() => {
+    setPages(splitHtmlIntoPages(html));
+  }, [html]);
 
   useEffect(() => {
     const savedSource = window.localStorage.getItem("latexboi:source");
