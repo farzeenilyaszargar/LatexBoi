@@ -323,6 +323,22 @@ export default function Editor() {
   }, [hydrated, theme]);
 
   useEffect(() => {
+    const isInsidePreview = (target: EventTarget | null) => target instanceof Node && paperFrameRef.current?.contains(target);
+    const preventOutsideWheelZoom = (event: globalThis.WheelEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !isInsidePreview(event.target)) event.preventDefault();
+    };
+    const preventOutsideKeyboardZoom = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && ["+", "=", "-", "_", "0"].includes(event.key) && !isInsidePreview(event.target)) event.preventDefault();
+    };
+    document.addEventListener("wheel", preventOutsideWheelZoom, { capture: true, passive: false });
+    document.addEventListener("keydown", preventOutsideKeyboardZoom, true);
+    return () => {
+      document.removeEventListener("wheel", preventOutsideWheelZoom, true);
+      document.removeEventListener("keydown", preventOutsideKeyboardZoom, true);
+    };
+  }, []);
+
+  useEffect(() => {
     if (hydrated) window.localStorage.setItem("latexboi:source", source);
   }, [hydrated, source]);
 
