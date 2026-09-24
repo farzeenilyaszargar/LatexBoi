@@ -323,12 +323,11 @@ export default function Editor() {
   }, [hydrated, theme]);
 
   useEffect(() => {
-    const isInsidePreview = (target: EventTarget | null) => target instanceof Node && paperFrameRef.current?.contains(target);
     const preventOutsideWheelZoom = (event: globalThis.WheelEvent) => {
-      if ((event.ctrlKey || event.metaKey) && !isInsidePreview(event.target)) event.preventDefault();
+      if (event.ctrlKey || event.metaKey) event.preventDefault();
     };
     const preventOutsideKeyboardZoom = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && ["+", "=", "-", "_", "0"].includes(event.key) && !isInsidePreview(event.target)) event.preventDefault();
+      if ((event.ctrlKey || event.metaKey) && ["+", "=", "-", "_", "0"].includes(event.key)) event.preventDefault();
     };
     document.addEventListener("wheel", preventOutsideWheelZoom, { capture: true, passive: false });
     document.addEventListener("keydown", preventOutsideKeyboardZoom, true);
