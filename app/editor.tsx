@@ -232,7 +232,7 @@ function highlightLatex(source: string, activeLine = -1) {
       return `<span class="syntax-bracket">${token}</span>`;
     });
     return `<span class="code-line${index === activeLine ? " active" : ""}">${highlighted}${comment ? `<span class="syntax-comment">${escapeHtml(comment)}</span>` : ""}</span>`;
-  }).join("\n");
+  }).join("");
 }
 
 function paginateHtml(html: string, frame: HTMLElement | null) {
