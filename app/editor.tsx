@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 import { Copy, Download, FileText, Minus, Moon, Play, Plus, RotateCcw, Sun } from "lucide-react";
 import katex from "katex";
 
@@ -359,6 +359,12 @@ export default function Editor() {
     frame.scrollTop = panRef.current.top - (event.clientY - panRef.current.y);
   }
 
+  function zoomPreviewWithWheel(event: WheelEvent<HTMLDivElement>) {
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    setPreviewZoom(paperScale + (event.deltaY < 0 ? 0.1 : -0.1));
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -378,7 +384,7 @@ export default function Editor() {
 
         <div className="pane preview-pane">
           <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale - 0.1)} title="Zoom out" aria-label="Zoom out"><Minus size={13} /></button><button className="zoom-level" onClick={resetPreviewZoom} title="Fit preview to pane">{Math.round(paperScale * 100)}%</button><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale + 0.1)} title="Zoom in" aria-label="Zoom in"><Plus size={13} /></button><span className="live-pill"><span className="pulse" /> Live</span></div></div>
-          <div className={`paper-frame${panningPreview ? " is-panning" : ""}`} ref={paperFrameRef} onPointerDown={startPreviewPan} onPointerMove={movePreviewPan} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setPanningPreview(false); }} onPointerCancel={() => setPanningPreview(false)}><div className="paper-stack" style={{ zoom: paperScale, width: `${210 * paperScale}mm` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
+          <div className={`paper-frame${panningPreview ? " is-panning" : ""}`} ref={paperFrameRef} title="Ctrl/Cmd + scroll to zoom · Drag to pan" onWheel={zoomPreviewWithWheel} onPointerDown={startPreviewPan} onPointerMove={movePreviewPan} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setPanningPreview(false); }} onPointerCancel={() => setPanningPreview(false)}><div className="paper-stack" style={{ zoom: paperScale, width: `${210 * paperScale}mm` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div>
           <div className="statusbar preview-status"><span>Rendered just now</span><span>100%</span></div>
         </div>
       </section>
