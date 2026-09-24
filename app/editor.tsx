@@ -79,6 +79,7 @@ function renderInline(text: string, refs: Record<string, number>, citations: Rec
   value = value.replace(/\\color\{([^{}]+)\}\{([^{}]*)\}/g, '<span style="color:$1">$2</span>');
   value = value.replace(/\\href\{([^{}]+)\}\{([^{}]*)\}/g, '<a href="$1" target="_blank" rel="noreferrer">$2</a>');
   value = value.replace(/\\url\{([^{}]+)\}/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>');
+  value = value.replace(/\\\\/g, "<br />");
   value = value.replace(/\\ref\{([^{}]+)\}/g, (_, key) => `<a class="reference">${refs[key] ?? "?"}</a>`);
   value = value.replace(/\\cite\{([^{}]+)\}/g, (_, key) => `<sup class="citation">[${citations[key] ?? "?"}]</sup>`);
   value = value.replace(/\\(quad|qquad|,|;|!)/g, " ");
@@ -177,7 +178,7 @@ function renderContent(source: string, refs: Record<string, number>, citations: 
 }
 
 function renderPlain(source: string, refs: Record<string, number>, citations: Record<string, number>) {
-  let text = source.replace(/%[^\n]*/g, "").replace(/\\(documentclass|usepackage|newtheorem|definecolor|setlength|pagestyle|fancyhf|fancyhead|fancyfoot|lstset|vspace|hspace|columnbreak|centering|label)\b(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, "");
+  let text = source.replace(/%[^\n]*/g, "").replace(/\\(documentclass|usepackage|newtheorem|definecolor|setlength|pagestyle|fancyhf|fancyhead|fancyfoot|lstset|vspace|hspace|columnbreak|centering|label|noindent)\b(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, "");
   const displayMath: string[] = [];
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => { displayMath.push(`<div class="math-display">${renderMath(formula, true)}</div>`); return `@@DISPLAY${displayMath.length - 1}@@`; });
   text = text.replace(/\\\$([^$]+)\$/g, (_, formula) => { displayMath.push(renderMath(formula)); return `@@DISPLAY${displayMath.length - 1}@@`; });
@@ -201,11 +202,16 @@ function renderLatex(source: string) {
   const { refs, citations } = extractLabels(source);
   const title = extractArgument(source, "title");
   const author = extractArgument(source, "author");
+  const date = extractArgument(source, "date");
   let body = source.replace(/^[\s\S]*?\\begin\{document\}/, "").replace(/\\end\{document\}[\s\S]*$/, "");
   body = body.replace(/\\title\{[^}]*\}|\\author\{[^}]*\}|\\date\{[^}]*\}/g, "");
+  let sectionNumber = 0;
+  let subsectionNumber = 0;
+  body = body.replace(/\\section(\*)?\{([^}]*)\}/g, (_, star, heading) => star ? `\\section*{${heading}}` : `\\section{${++sectionNumber}\\quad ${heading}}`);
+  body = body.replace(/\\subsection(\*)?\{([^}]*)\}/g, (_, star, heading) => star ? `\\subsection*{${heading}}` : `\\subsection{${sectionNumber}.${++subsectionNumber}\\quad ${heading}}`);
   const headings = [...body.matchAll(/\\section\*?\{([^}]*)\}/g)].map((match, index) => `<li>${index + 1}. ${renderInline(match[1], refs, citations)}</li>`).join("");
   const toc = headings ? `<nav class="toc"><strong>Contents</strong><ol>${headings}</ol></nav>` : "";
-  const header = title ? `<h1>${renderInline(title, refs, citations)}</h1><p class="author">${renderInline(author, refs, citations)}</p>` : "";
+  const header = title ? `<h1>${renderInline(title, refs, citations)}</h1><p class="author">${renderInline(author, refs, citations)}${date ? `<br /><span class="date">${renderInline(date, refs, citations)}</span>` : ""}</p>` : "";
   return header + renderContent(body, refs, citations).replace(/<p><nav class="toc">[\s\S]*?<\/nav><\/p>/, "") + (body.includes("\\tableofcontents") ? toc : "");
 }
 
