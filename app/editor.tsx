@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Copy, Download, FileText, Play, RotateCcw, Sparkles } from "lucide-react";
 import katex from "katex";
 
@@ -59,8 +59,19 @@ function renderLatex(source: string) {
 
 export default function Editor() {
   const [source, setSource] = useState(STARTER);
+  const [hydrated, setHydrated] = useState(false);
   const [copied, setCopied] = useState(false);
   const html = useMemo(() => renderLatex(source), [source]);
+
+  useEffect(() => {
+    const savedSource = window.localStorage.getItem("latexboi:source");
+    if (savedSource) setSource(savedSource);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) window.localStorage.setItem("latexboi:source", source);
+  }, [hydrated, source]);
 
   async function copySource() {
     await navigator.clipboard.writeText(source);
@@ -72,13 +83,13 @@ export default function Editor() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand"><span className="brand-mark"><Sparkles size={15} strokeWidth={2.5} /></span><span>LatexBoi</span></div>
-        <div className="topbar-center"><span className="dot" /> Untitled document <span className="saved">Saved locally</span></div>
-        <div className="topbar-actions"><button className="icon-button" onClick={copySource} title="Copy source"><Copy size={16} />{copied ? "Copied" : "Copy"}</button><button className="primary-button"><Download size={16} /> Export PDF</button></div>
+        <div className="topbar-center"><span className="dot" /> Untitled document <span className="saved">{hydrated ? "Saved locally" : "Loading…"}</span></div>
+        <div className="topbar-actions"><button className="icon-button" onClick={copySource} title="Copy source"><Copy size={16} />{copied ? "Copied" : "Copy"}</button><button className="primary-button" onClick={() => window.print()}><Download size={16} /> Export PDF</button></div>
       </header>
 
       <section className="workspace">
         <div className="pane editor-pane">
-          <div className="pane-header"><div className="pane-title"><FileText size={15} /> main.tex</div><div className="pane-actions"><span className="language-pill">LaTeX</span><button className="small-button" onClick={() => setSource(STARTER)} title="Reset document"><RotateCcw size={14} /></button></div></div>
+          <div className="pane-header"><div className="pane-title"><FileText size={15} /> main.tex</div><div className="pane-actions"><span className="language-pill">LaTeX</span><button className="small-button" onClick={() => { setSource(STARTER); window.localStorage.removeItem("latexboi:source"); }} title="Reset document"><RotateCcw size={14} /></button></div></div>
           <div className="editor-wrap"><div className="line-numbers">{source.split("\n").map((_, index) => <span key={index}>{index + 1}</span>)}</div><textarea spellCheck={false} value={source} onChange={(event) => setSource(event.target.value)} aria-label="LaTeX source editor" /></div>
           <div className="statusbar"><span><span className="status-dot" /> Ready</span><span>{source.length} characters</span></div>
         </div>
