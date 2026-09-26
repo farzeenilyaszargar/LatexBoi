@@ -32,8 +32,13 @@ const escapeHtml = (value: string) => value
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
   .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 
+function stripComments(source: string) {
+  return source.replace(/(\\*)%[^\n]*/g, (match, slashes: string) => slashes.length % 2 ? match : slashes);
+}
+
 function findMatchingEnvironment(source: string, start: number, env: string) {
-  const token = new RegExp(`\\\\(begin|end)\\{${env}\\}`, "g");
+  const safeEnv = env.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const token = new RegExp(`\\\\(begin|end)\\{${safeEnv}\\}`, "g");
   const opening = token.exec(source.slice(start));
   if (!opening) return { content: source.slice(start), end: source.length };
   token.lastIndex = start;
@@ -46,7 +51,7 @@ function findMatchingEnvironment(source: string, start: number, env: string) {
       if (depth === 0) return { content: source.slice(start + opening[0].length, token.lastIndex - match[0].length), end: token.lastIndex };
     }
   }
-  return { content: source.slice(start), end: source.length };
+  return { content: source.slice(start + opening[0].length), end: source.length };
 }
 
 function replaceBraced(text: string, command: string, render: (value: string) => string) {
@@ -63,8 +68,7 @@ function renderMath(formula: string, display = false) {
 
 function renderInline(text: string, refs: Record<string, number>, citations: Record<string, number>) {
   const math: string[] = [];
-  let value = text
-    .replace(/%[^\n]*/g, "")
+  let value = stripComments(text)
     .replace(/\\\((.+?)\\\)/g, (_, formula) => { math.push(renderMath(formula)); return `@@MATH${math.length - 1}@@`; })
     .replace(/(?<!\\)\$([^$\n]+)\$/g, (_, formula) => { math.push(renderMath(formula)); return `@@MATH${math.length - 1}@@`; })
     .replace(/\\LaTeX\{?\}?/g, "LaTeX")
@@ -104,9 +108,10 @@ function extractLabels(source: string) {
 }
 
 function renderTable(content: string, refs: Record<string, number>, citations: Record<string, number>) {
-  const rows = content.replace(/\\(toprule|midrule|bottomrule|hline|cline\{[^}]*\})/g, "").split(/\\\\/).map((row) => row.trim()).filter(Boolean);
+  const tableContent = content.replace(/^\s*\{[^{}]*\}\s*/, "");
+  const rows = tableContent.replace(/\\(toprule|midrule|bottomrule|hline|cline\{[^}]*\})/g, "").split(/\\\\/).map((row) => row.trim()).filter(Boolean);
   return `<div class="table-scroll"><table>${rows.map((row) => {
-    const cells = row.split(/(?<!\\)&/).map((cell) => cell.trim()).filter(Boolean);
+    const cells = row.split(/(?<!\\)&/).map((cell) => cell.trim());
     return `<tr>${cells.map((cell) => `<td>${renderInline(cell, refs, citations)}</td>`).join("")}</tr>`;
   }).join("")}</table></div>`;
 }
@@ -182,7 +187,7 @@ function renderContent(source: string, refs: Record<string, number>, citations: 
 function renderPlain(source: string, refs: Record<string, number>, citations: Record<string, number>): string {
   const segments = source.split(/\\(?:newpage|clearpage)\b/);
   if (segments.length > 1) return segments.map((segment) => renderPlain(segment, refs, citations)).join('<div class="page-break"></div>');
-  let text = source.replace(/%[^\n]*/g, "").replace(/\\(documentclass|usepackage|newtheorem|definecolor|setlength|pagestyle|fancyhf|fancyhead|fancyfoot|lstset|vspace|hspace|columnbreak|centering|label|noindent)\b(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, "");
+  let text = stripComments(source).replace(/\\(documentclass|usepackage|newtheorem|definecolor|setlength|pagestyle|fancyhf|fancyhead|fancyfoot|lstset|vspace|hspace|columnbreak|centering|label|noindent)\b(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, "");
   const displayMath: string[] = [];
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => { displayMath.push(`<div class="math-display">${renderMath(formula, true)}</div>`); return `@@DISPLAY${displayMath.length - 1}@@`; });
   text = text.replace(/\\\$([^$]+)\$/g, (_, formula) => { displayMath.push(renderMath(formula)); return `@@DISPLAY${displayMath.length - 1}@@`; });
@@ -204,6 +209,9 @@ function renderPlain(source: string, refs: Record<string, number>, citations: Re
 }
 
 function renderLatex(source: string) {
+  // Comments must be removed before finding environments or numbering sections.
+  // An escaped percent sign is literal; an even number of backslashes is not.
+  source = stripComments(source);
   const { refs, citations } = extractLabels(source);
   const title = extractArgument(source, "title");
   const author = extractArgument(source, "author");
@@ -214,6 +222,7 @@ function renderLatex(source: string) {
   let subsectionNumber = 0;
   body = body.replace(/\\(section|subsection)(\*)?\{([^}]*)\}/g, (_, kind, star, heading) => {
     if (kind === "section") {
+      if (star) return `\\section*{${heading}}`;
       sectionNumber += 1;
       subsectionNumber = 0;
       return star ? `\\section*{${heading}}` : `\\section{${sectionNumber}\\quad ${heading}}`;
