@@ -353,9 +353,11 @@ export default function Editor() {
       setPages(paginateHtml(html, frame));
     };
     repaginate();
+    let disposed = false;
+    void document.fonts.ready.then(() => { if (!disposed) repaginate(); });
     const observer = typeof ResizeObserver !== "undefined" && paperFrameRef.current ? new ResizeObserver(repaginate) : null;
     if (observer && paperFrameRef.current) observer.observe(paperFrameRef.current);
-    return () => observer?.disconnect();
+    return () => { disposed = true; observer?.disconnect(); };
   }, [html]);
 
   useEffect(() => {
@@ -398,6 +400,12 @@ export default function Editor() {
     await navigator.clipboard.writeText(source);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1400);
+  }
+
+  async function exportPdf() {
+    await document.fonts.ready;
+    flushSync(() => setPages(paginateHtml(html, paperFrameRef.current)));
+    window.print();
   }
 
   function moveDivider(clientX: number) {
@@ -510,7 +518,7 @@ export default function Editor() {
       <header className="topbar">
         <div className="brand"><span className="brand-mark"><img className={`brand-logo ${theme === "light" ? "logo-light" : "logo-dark"}`} src="/latexboi-logo.png" alt="" /></span><span>LatexBoi</span></div>
         <div className="topbar-center"><span className="dot" /> Untitled document <span className="saved">Saved locally</span></div>
-        <div className="topbar-actions"><button className="icon-button theme-button" onClick={() => setTheme((current) => current === "light" ? "dark" : "light")} title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</button><button className="primary-button" onClick={() => window.print()}><Download size={16} /> Export PDF</button></div>
+        <div className="topbar-actions"><button className="icon-button theme-button" onClick={() => setTheme((current) => current === "light" ? "dark" : "light")} title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</button><button className="primary-button" onClick={exportPdf}><Download size={16} /> Export PDF</button></div>
       </header>
 
       <section className={`workspace${draggingDivider ? " is-resizing" : ""}`} style={{ gridTemplateColumns: `minmax(0, ${split}fr) 8px minmax(0, ${100 - split}fr)` }}>
