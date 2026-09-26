@@ -106,7 +106,6 @@ export default function Autocomplete({ textarea, onApply }: { textarea: RefObjec
 
   if (!menu || !items.length) return null;
   return <div className="completion-popup" style={{ left: menu.left, top: menu.top, maxHeight: menu.height }} onMouseDown={event => event.preventDefault()}>
-    <div className="completion-heading">LaTeX commands <span>↑↓ choose · Enter / Tab insert · Esc close</span></div>
     <div ref={list} id="latex-completions" role="listbox" aria-label="LaTeX commands" className="completion-list">
       {items.map((item, index) => <div key={item.label} id={`latex-option-${index}`} role="option" aria-selected={index === selected} onMouseDown={event => { event.preventDefault(); accept(index); }} className="completion-option">
         <code>\{item.label}</code><span>{item.description}</span>
