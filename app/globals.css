@@ -10,6 +10,15 @@
 html,body { margin:0; height:100%; overflow:hidden; background:var(--canvas); color:var(--ink); font-family:'DM Sans', sans-serif; transition:background-color .2s ease,color .2s ease; }
 button, textarea { font:inherit; }
 button { cursor:pointer; }
+.completion-popup { position:absolute; z-index:5; width:340px; max-width:calc(100% - 12px); display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--line); border-radius:9px; box-shadow:0 10px 32px #0003; overflow:hidden; color:var(--ink); }
+.completion-heading { flex:none; padding:9px 10px; font-size:11px; font-weight:600; border-bottom:1px solid var(--line); }
+.completion-heading span { display:block; margin-top:3px; color:var(--muted); font-size:10px; font-weight:400; }
+.completion-list { overflow:auto; min-height:0; overscroll-behavior:contain; }
+.completion-option { padding:7px 10px; cursor:pointer; display:flex; flex-direction:column; gap:2px; }
+.completion-option code { font:12px 'DM Mono',monospace; }
+.completion-option span { font-size:11px; color:var(--muted); }
+.completion-option[aria-selected="true"],.completion-option:hover { background:color-mix(in srgb,var(--accent) 14%,var(--surface)); }
+.completion-option[aria-selected="true"] code { color:var(--accent); }
 button:focus-visible,.divider:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 .brand-domain { color:var(--accent); font-weight:500; }
 .app-shell { height:100vh; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
