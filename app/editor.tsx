@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 import { Copy, Download, FileText, Minus, Moon, Play, Plus, RotateCcw, Sun } from "lucide-react";
 import katex from "katex";
+import { flushSync } from "react-dom";
 
 import "katex/dist/katex.min.css";
 
@@ -291,7 +292,7 @@ export default function Editor() {
   useEffect(() => {
     const repaginate = () => {
       const frame = paperFrameRef.current;
-      if (frame && !userZoomedRef.current) setPaperScale(Math.min(1, Math.max(0.55, (frame.clientWidth - 40) / 793.7)));
+      if (frame && !userZoomedRef.current) setPaperScale(fitScale(frame));
       setPages(paginateHtml(html, frame));
     };
     repaginate();
@@ -356,35 +357,39 @@ export default function Editor() {
   }
 
   function setPreviewZoom(next: number) {
-    userZoomedRef.current = true;
-    setPaperScale(Math.min(2, Math.max(0.55, next)));
+    const frame = paperFrameRef.current;
+    if (!frame) return;
+    const bounds = frame.getBoundingClientRect();
+    zoomAtCursor(next, bounds.left + frame.clientWidth / 2, bounds.top + frame.clientHeight / 2);
+  }
+
+  function fitScale(frame: HTMLElement) {
+    const style = getComputedStyle(frame);
+    const available = frame.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    return Math.min(1, Math.max(0.1, available / (210 * 96 / 25.4)));
   }
 
   function zoomAtCursor(next: number, clientX: number, clientY: number) {
     const frame = paperFrameRef.current;
-    if (!frame) return;
-    const previousScale = paperScale;
-    const nextScale = Math.min(2, Math.max(0.55, next));
-    if (nextScale === previousScale) return;
-    const bounds = frame.getBoundingClientRect();
-    const offsetX = clientX - bounds.left;
-    const offsetY = clientY - bounds.top;
-    const ratio = nextScale / previousScale;
-    const previousLeft = frame.scrollLeft;
-    const previousTop = frame.scrollTop;
-    setPreviewZoom(nextScale);
-    requestAnimationFrame(() => {
-      const updatedFrame = paperFrameRef.current;
-      if (!updatedFrame) return;
-      updatedFrame.scrollLeft = previousLeft + (offsetX - updatedFrame.clientWidth / 2) * (ratio - 1);
-      updatedFrame.scrollTop = (previousTop + offsetY) * ratio - offsetY;
-    });
+    const canvas = frame?.querySelector<HTMLElement>(".paper-canvas");
+    if (!frame || !canvas) return;
+    const nextScale = Math.min(3, Math.max(0.1, next));
+    if (nextScale === paperScale) return;
+    const before = canvas.getBoundingClientRect();
+    const paperX = (clientX - before.left) / paperScale;
+    const paperY = (clientY - before.top) / paperScale;
+    userZoomedRef.current = true;
+    flushSync(() => setPaperScale(nextScale));
+    const after = canvas.getBoundingClientRect();
+    frame.scrollLeft += after.left + paperX * nextScale - clientX;
+    frame.scrollTop += after.top + paperY * nextScale - clientY;
   }
 
   function resetPreviewZoom() {
     const frame = paperFrameRef.current;
     userZoomedRef.current = false;
-    setPaperScale(frame ? Math.min(1, Math.max(0.55, (frame.clientWidth - 40) / 793.7)) : 1);
+    setPaperScale(frame ? fitScale(frame) : 1);
+    if (frame) frame.scrollLeft = 0;
   }
 
   function startPreviewPan(event: PointerEvent<HTMLDivElement>) {
@@ -444,7 +449,7 @@ export default function Editor() {
 
         <div className="pane preview-pane">
           <div className="pane-header"><div className="pane-title"><Play size={14} fill="currentColor" /> Preview</div><div className="pane-actions"><span className="page-indicator">Page {viewedPage} of {pages.length}</span><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale - 0.1)} title="Zoom out" aria-label="Zoom out"><Minus size={13} /></button><button className="zoom-level" onClick={resetPreviewZoom} title="Fit preview to pane">{Math.round(paperScale * 100)}%</button><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale + 0.1)} title="Zoom in" aria-label="Zoom in"><Plus size={13} /></button></div></div>
-          <div className={`paper-frame${panningPreview ? " is-panning" : ""}`} ref={paperFrameRef} title="Scroll to move · Ctrl/Cmd + scroll to zoom · Drag to pan" onScroll={updateViewedPage} onWheelCapture={zoomPreviewWithWheel} onPointerDown={startPreviewPan} onPointerMove={movePreviewPan} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setPanningPreview(false); }} onPointerCancel={() => setPanningPreview(false)}><div className="paper-stack" style={{ width: `${210 * Math.max(1, paperScale)}mm`, height: `${(pages.length * 297 + Math.max(0, pages.length - 1) * 5.82) * paperScale}mm` }}><div className="paper-canvas" style={{ transform: `scale(${paperScale})` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div></div>
+          <div className={`paper-frame${panningPreview ? " is-panning" : ""}`} ref={paperFrameRef} title="Scroll to move · Ctrl/Cmd + scroll to zoom · Drag to pan" onScroll={updateViewedPage} onWheelCapture={zoomPreviewWithWheel} onPointerDown={startPreviewPan} onPointerMove={movePreviewPan} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setPanningPreview(false); }} onPointerCancel={() => setPanningPreview(false)}><div className="paper-stack" style={{ width: `${210 * paperScale}mm`, height: `${(pages.length * 297 + Math.max(0, pages.length - 1) * 5.82) * paperScale}mm` }}><div className="paper-canvas" style={{ transform: `scale(${paperScale})` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div></div>
         </div>
       </section>
     </main>

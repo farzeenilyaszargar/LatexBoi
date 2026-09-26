@@ -44,7 +44,10 @@ textarea { flex:1; min-width:0; resize:none; padding:18px 16px; outline:none; bo
 .abstract { font-size:13px; line-height:1.5; }
 .abstract strong { font-size:13px; }
 .paper-frame { background:color-mix(in srgb, var(--canvas) 94%, #000 6%); }
-.paper-canvas { margin:0 auto; }
+.paper-frame { display:block; }
+.paper-stack { position:relative; overflow:clip; }
+.paper-canvas { margin:0; transform-origin:top left; }
+@media print { .paper-stack { overflow:visible; } }
 /* The textarea is the scroll owner. Its translated mirror must contain every
    source line, including content outside the initial editor viewport. */
 .code-editor pre { inset:0 auto auto 0; width:max-content; min-width:100%; height:auto; min-height:100%; overflow:visible !important; }
