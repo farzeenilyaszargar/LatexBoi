@@ -240,7 +240,7 @@ function paginateHtml(html: string, frame: HTMLElement | null) {
   if (typeof document === "undefined" || !frame) return [html];
   const container = document.createElement("div");
   container.innerHTML = html;
-  const blocks = Array.from(container.childNodes).map((node) => node instanceof HTMLElement ? node.outerHTML : escapeHtml(node.textContent || "")).filter(Boolean);
+  const blocks = Array.from(container.childNodes).filter((node) => node instanceof HTMLElement || node.textContent?.trim());
   if (blocks.length === 0) return [html];
 
   // Keep screen pagination and print pagination on the same physical A4 canvas.
@@ -250,20 +250,69 @@ function paginateHtml(html: string, frame: HTMLElement | null) {
   measure.className = "paper";
   Object.assign(measure.style, { position: "absolute", visibility: "hidden", pointerEvents: "none", width: `${pageWidth}px`, height: `${pageHeight}px`, minHeight: "0", maxWidth: "none", overflow: "hidden" });
   document.body.appendChild(measure);
-
+  const content = document.createElement("div");
+  content.style.display = "flow-root";
+  measure.appendChild(content);
+  const style = getComputedStyle(measure);
+  const availableHeight = pageHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
   const pages: string[] = [];
-  let page: string[] = [];
-  blocks.forEach((block) => {
-    measure.innerHTML = page.concat(block).join("");
-    if (page.length > 0 && measure.scrollHeight > pageHeight + 1) {
-      pages.push(page.join(""));
-      page = [block];
-      measure.innerHTML = block;
-    } else {
-      page.push(block);
+  const fits = () => content.getBoundingClientRect().height <= availableHeight + 0.1;
+  const finishPage = () => {
+    if (content.childNodes.length) pages.push(content.innerHTML);
+    content.replaceChildren();
+  };
+  function place(node: Node) {
+    content.appendChild(node);
+    if (fits()) return;
+    content.removeChild(node);
+    // Split at word boundaries with DOM ranges so inline emphasis and links
+    // survive across pages. Equations remain indivisible.
+    if (node instanceof HTMLElement && !node.matches("h1,h2,h3,h4,.math-display,figure,table")) {
+      const points: { node: Text; offset: number }[] = [];
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+      let textNode: Node | null;
+      while ((textNode = walker.nextNode())) {
+        if (textNode.parentElement?.closest(".katex,svg,math")) continue;
+        for (const match of (textNode.textContent || "").matchAll(/\S+\s*/g)) {
+          points.push({ node: textNode as Text, offset: match.index! + match[0].length });
+        }
+      }
+      const fragment = (count: number, tail = false) => {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const point = points[count - 1];
+        if (tail) range.setStart(point.node, point.offset);
+        else range.setEnd(point.node, point.offset);
+        const shell = node.cloneNode(false) as HTMLElement;
+        shell.appendChild(range.cloneContents());
+        return shell;
+      };
+      let low = 1, high = points.length - 1, best = 0;
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        const candidate = fragment(mid);
+        content.appendChild(candidate);
+        const fitsHere = fits();
+        candidate.remove();
+        if (fitsHere) { best = mid; low = mid + 1; }
+        else high = mid - 1;
+      }
+      if (best) {
+        content.appendChild(fragment(best));
+        finishPage();
+        place(fragment(best, true));
+        return;
+      }
     }
-  });
-  if (page.length) pages.push(page.join(""));
+    if (content.childNodes.length) {
+      finishPage();
+      place(node);
+      return;
+    }
+    content.appendChild(node);
+  }
+  blocks.forEach(place);
+  finishPage();
   measure.remove();
   return pages;
 }
