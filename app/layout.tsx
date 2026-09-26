@@ -11,11 +11,13 @@ export const metadata: Metadata = {
     type: "website", url: "/", siteName: "Unleaf", locale: "en_US",
     title: "Unleaf — Less overhead. More paper.",
     description: "A lightweight, no-login LaTeX workspace. Write, preview, export. No account. Just write.",
+    images: [{ url: "/unleaf-social.png", width: 1672, height: 941, alt: "Unleaf — the no-login LaTeX editor" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Unleaf — Free Online LaTeX Editor",
     description: "Less overhead. More paper. Write LaTeX with live preview and PDF export—no login required.",
+    images: [{ url: "/unleaf-social.png", width: 1672, height: 941, alt: "Unleaf — the no-login LaTeX editor" }],
   },
   icons: {
     icon: { url: "/unleaf.svg", type: "image/svg+xml" },
