@@ -2,12 +2,24 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LatexBoi | Write Research Papers (Fuck Overleaf)",
-  description: "Write and render research papers in a lightweight, login-free LaTeX workspace.",
+  metadataBase: new URL("https://unleaf.lol"),
+  title: "Unleaf — Free Online LaTeX Editor, No Login",
+  description: "Write research papers with Unleaf, a free online LaTeX editor with live preview, local draft saving, and PDF export. No account. Just write.",
+  applicationName: "Unleaf",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website", url: "/", siteName: "Unleaf", locale: "en_US",
+    title: "Unleaf — Less overhead. More paper.",
+    description: "A lightweight, no-login LaTeX workspace. Write, preview, export. No account. Just write.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Unleaf — Free Online LaTeX Editor",
+    description: "Less overhead. More paper. Write LaTeX with live preview and PDF export—no login required.",
+  },
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: { url: "/unleaf.svg", type: "image/svg+xml" },
+    shortcut: "/unleaf.svg",
   },
 };
 
