@@ -309,8 +309,50 @@ function paginateHtml(html: string, frame: HTMLElement | null) {
       return;
     }
     content.appendChild(node);
-    if (fits()) return;
+    if (fits()) {
+      // Reserve two text lines below headings so a section does not start with
+      // an isolated heading at the foot of the preceding page.
+      if (node instanceof HTMLElement && node.matches("h2,h3,h4") && content.childNodes.length > 1) {
+        const reserve = document.createElement("div");
+        reserve.style.height = `${parseFloat(style.lineHeight) * 2}px`;
+        content.appendChild(reserve);
+        const hasRoomForText = fits();
+        reserve.remove();
+        if (!hasRoomForText) {
+          node.remove();
+          finishPage();
+          content.appendChild(node);
+        }
+      }
+      return;
+    }
     content.removeChild(node);
+    // Keep table rows intact rather than splitting arbitrary cell text with a
+    // DOM range (which changes the column structure on the continuation page).
+    if (node instanceof HTMLElement && node.matches(".table-scroll")) {
+      const table = node.querySelector("table");
+      if (table && table.rows.length > 1) {
+        const rows = Array.from(table.rows);
+        let shell = node.cloneNode(false) as HTMLElement;
+        let chunk = table.cloneNode(false) as HTMLTableElement;
+        shell.appendChild(chunk);
+        content.appendChild(shell);
+        for (const row of rows) {
+          chunk.appendChild(row);
+          if (!fits() && (chunk.rows.length > 1 || content.childNodes.length > 1)) {
+            row.remove();
+            if (!chunk.rows.length) shell.remove();
+            finishPage();
+            shell = node.cloneNode(false) as HTMLElement;
+            chunk = table.cloneNode(false) as HTMLTableElement;
+            shell.appendChild(chunk);
+            content.appendChild(shell);
+            chunk.appendChild(row);
+          }
+        }
+        return;
+      }
+    }
     // Split at word boundaries with DOM ranges so inline emphasis and links
     // survive across pages. Equations remain indivisible.
     if (node instanceof HTMLElement && !node.matches("h1,h2,h3,h4,.math-display,figure,table")) {
