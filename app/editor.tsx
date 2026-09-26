@@ -10,26 +10,7 @@ import Autocomplete from "./autocomplete";
 
 import "katex/dist/katex.min.css";
 
-const STARTER = String.raw`\documentclass{article}
-\usepackage{amsmath}
-\title{A tiny document}
-\author{Unleaf}
-
-\begin{document}
-\maketitle
-
-Hello, world! This is a simple LaTeX workspace.
-
-Here is a famous equation:
-\[
-  E = mc^2
-\]
-
-\section{A new beginning}
-
-Write on the left. Your document appears on the right as you type.
-
-\end{document}`;
+import { STARTER } from "./starter";
 
 const escapeHtml = (value: string) => value
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
