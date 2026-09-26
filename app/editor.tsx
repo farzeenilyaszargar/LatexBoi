@@ -614,7 +614,7 @@ export default function Editor() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div className="brand" title="Unleaf — Less overhead. More paper."><span className="brand-mark"><img className="brand-logo" src="/unleaf.svg" alt="" /></span><span>unleaf<span className="brand-domain">.lol</span></span></div>
+        <div className="brand" title="Unleaf — Less overhead. More paper."><span className="brand-mark"><img className="brand-logo" src="/unleaf.svg" alt="" /></span><span>Unleaf</span></div>
         <div className="topbar-center"><span className="dot" /> Untitled document <span className="saved" role="status">{copyError ? "Copy blocked — use Ctrl/Cmd+C" : saveState}</span></div>
         <div className="topbar-actions"><button className="icon-button theme-button" onClick={() => setTheme((current) => current === "light" ? "dark" : "light")} title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</button><button className="primary-button" onClick={exportPdf}><Download size={16} /> Export PDF</button></div>
       </header>
