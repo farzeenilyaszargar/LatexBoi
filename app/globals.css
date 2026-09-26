@@ -3,7 +3,7 @@
 @font-face { font-family:'LatexBoi Computer Modern'; src:url('/fonts/KaTeX_Main-Bold.woff2') format('woff2'); font-weight:700; }
 
 :root { --ink:#183b29; --muted:#607568; --line:#dce8df; --surface:#ffffff; --paper:#ffffff; --paper-ink:#272727; --canvas:#f5faf6; --accent:#137547; --blue:#327b69; }
-[data-theme="dark"] { --ink:#e7f3eb; --muted:#a0b7a8; --line:#2e4738; --surface:#172b20; --paper:#ffffff; --paper-ink:#272727; --canvas:#0e1d15; --accent:#7edda2; --blue:#93d8c2; color-scheme:dark; }
+[data-theme="dark"] { --ink:#f1f1f3; --muted:#a3a5ad; --line:#35373e; --surface:#202226; --paper:#ffffff; --paper-ink:#272727; --canvas:#151619; --accent:#7edda2; --blue:#9dcbd8; color-scheme:dark; }
 * { box-sizing:border-box; }
 * { scrollbar-width:none; }
 *::-webkit-scrollbar { display:none; width:0; height:0; }
