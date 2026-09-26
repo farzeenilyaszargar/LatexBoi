@@ -66,6 +66,7 @@ function renderInline(text: string, refs: Record<string, number>, citations: Rec
   let value = text
     .replace(/%[^\n]*/g, "")
     .replace(/\\\((.+?)\\\)/g, (_, formula) => { math.push(renderMath(formula)); return `@@MATH${math.length - 1}@@`; })
+    .replace(/(?<!\\)\$([^$\n]+)\$/g, (_, formula) => { math.push(renderMath(formula)); return `@@MATH${math.length - 1}@@`; })
     .replace(/\\LaTeX\{?\}?/g, "LaTeX")
     .replace(/\\today/g, new Date().toLocaleDateString())
     .replace(/~+/g, " ");
@@ -178,7 +179,9 @@ function renderContent(source: string, refs: Record<string, number>, citations: 
   return output;
 }
 
-function renderPlain(source: string, refs: Record<string, number>, citations: Record<string, number>) {
+function renderPlain(source: string, refs: Record<string, number>, citations: Record<string, number>): string {
+  const segments = source.split(/\\(?:newpage|clearpage)\b/);
+  if (segments.length > 1) return segments.map((segment) => renderPlain(segment, refs, citations)).join('<div class="page-break"></div>');
   let text = source.replace(/%[^\n]*/g, "").replace(/\\(documentclass|usepackage|newtheorem|definecolor|setlength|pagestyle|fancyhf|fancyhead|fancyfoot|lstset|vspace|hspace|columnbreak|centering|label|noindent)\b(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, "");
   const displayMath: string[] = [];
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => { displayMath.push(`<div class="math-display">${renderMath(formula, true)}</div>`); return `@@DISPLAY${displayMath.length - 1}@@`; });
@@ -196,7 +199,7 @@ function renderPlain(source: string, refs: Record<string, number>, citations: Re
     if (block.trim().startsWith("<")) return restored;
     const rendered = renderInline(block, refs, citations).replace(/@@DISPLAY(\d+)@@/g, (_, index) => displayMath[Number(index)]);
     const isKeywords = /\\textbf\{Keywords:\}/i.test(block);
-    return block.trim().startsWith("@@DISPLAY") ? rendered : `<p${isKeywords ? ' class="keywords"' : ""}>${rendered.replace(/\n/g, isKeywords ? " " : "<br />")}</p>`;
+    return block.trim().startsWith("@@DISPLAY") ? rendered : `<p${isKeywords ? ' class="keywords"' : ""}>${rendered.replace(/\n/g, " ")}</p>`;
   }).join("");
 }
 
@@ -262,6 +265,10 @@ function paginateHtml(html: string, frame: HTMLElement | null) {
     content.replaceChildren();
   };
   function place(node: Node) {
+    if (node instanceof HTMLElement && node.matches(".page-break")) {
+      finishPage();
+      return;
+    }
     content.appendChild(node);
     if (fits()) return;
     content.removeChild(node);
