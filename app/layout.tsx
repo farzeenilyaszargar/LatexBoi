@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://unleaf.lol"),
-  title: "Unleaf — Free Online LaTeX Editor, No Login",
+  title: "Unleaf | Free Online LaTex Editor",
   description: "Write research papers with Unleaf, a free online LaTeX editor with live preview, local draft saving, and PDF export. No account. Just write.",
   applicationName: "Unleaf",
   alternates: { canonical: "/" },
