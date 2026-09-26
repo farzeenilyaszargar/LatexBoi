@@ -83,8 +83,11 @@ function renderInline(text: string, refs: Record<string, number>, citations: Rec
   value = replaceBraced(value, "emph", (v) => `<em>${v}</em>`);
   value = replaceBraced(value, "color", (v) => `<span style="color:${v}">${v}</span>`);
   value = value.replace(/\\color\{([^{}]+)\}\{([^{}]*)\}/g, '<span style="color:$1">$2</span>');
-  value = value.replace(/\\href\{([^{}]+)\}\{([^{}]*)\}/g, '<a href="$1" target="_blank" rel="noreferrer">$2</a>');
-  value = value.replace(/\\url\{([^{}]+)\}/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>');
+  const link = (url: string, label: string) => /^(https?:\/\/|mailto:|#)/i.test(url)
+    ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`
+    : label;
+  value = value.replace(/\\href\{([^{}]+)\}\{([^{}]*)\}/g, (_, url, label) => link(url, label));
+  value = value.replace(/\\url\{([^{}]+)\}/g, (_, url) => link(url, url));
   value = value.replace(/\\\\/g, "<br />");
   value = value.replace(/\\ref\{([^{}]+)\}/g, (_, key) => `<a class="reference">${refs[key] ?? "?"}</a>`);
   value = value.replace(/\\cite\{([^{}]+)\}/g, (_, key) => `<sup class="citation">[${citations[key] ?? "?"}]</sup>`);
@@ -188,24 +191,49 @@ function renderPlain(source: string, refs: Record<string, number>, citations: Re
   const segments = source.split(/\\(?:newpage|clearpage)\b/);
   if (segments.length > 1) return segments.map((segment) => renderPlain(segment, refs, citations)).join('<div class="page-break"></div>');
   let text = stripComments(source).replace(/\\(documentclass|usepackage|newtheorem|definecolor|setlength|pagestyle|fancyhf|fancyhead|fancyfoot|lstset|vspace|hspace|columnbreak|centering|label|noindent)\b(?:\[[^\]]*\])?(?:\{[^}]*\})?/g, "");
-  const displayMath: string[] = [];
-  text = text.replace(/\\\[([\s\S]*?)\\\]/g, (_, formula) => { displayMath.push(`<div class="math-display">${renderMath(formula, true)}</div>`); return `@@DISPLAY${displayMath.length - 1}@@`; });
-  text = text.replace(/\\\$([^$]+)\$/g, (_, formula) => { displayMath.push(renderMath(formula)); return `@@DISPLAY${displayMath.length - 1}@@`; });
-  text = text.replace(/\\footnote\{([^{}]*)\}/g, (_, value) => `<sup class="footnote">†</sup><span class="footnote-text">${renderInline(value, refs, citations)}</span>`);
-  text = text.replace(/\\includegraphics(?:\[[^\]]*\])?\{([^}]*)\}/g, (_, name) => `<div class="image-placeholder">▧ ${escapeHtml(name)}</div>`);
+  // Only our generated fragments can bypass escaping. Source HTML is always text.
+  let prefix = "LATEXFRAGMENT";
+  while (source.includes(prefix)) prefix += "X";
+  const fragments: { html: string; block: boolean }[] = [];
+  const keep = (html: string, block = true) => {
+    fragments.push({ html, block });
+    return prefix + (fragments.length - 1) + "END";
+  };
+  text = text.replace(/\\\[([\s\S]*?)\\\]|(?<!\\)\$\$([\s\S]*?)\$\$/g, (_, bracket, dollars) =>
+    keep('<div class="math-display">' + renderMath(bracket ?? dollars, true) + "</div>"));
+  text = text.replace(/\\footnote\{([^{}]*)\}/g, (_, value) => keep('<sup class="footnote">†</sup><span class="footnote-text">' + renderInline(value, refs, citations) + "</span>", false));
+  text = text.replace(/\\includegraphics(?:\[[^\]]*\])?\{([^}]*)\}/g, (_, name) => keep('<div class="image-placeholder">▧ ' + escapeHtml(name) + "</div>"));
   text = text.replace(/\\lipsum(?:\[([^\]]*)\])?/g, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer feugiat, nibh at facilisis volutpat, lectus neque consequat ipsum, vitae suscipit justo sem a justo.");
   text = text.replace(/\\(maketitle|tableofcontents|newpage|end\{document\}|begin\{document\})/g, "");
-  text = text.replace(/\\section\*?\{([^}]*)\}/g, (_, title) => `<h2>${renderInline(title, refs, citations)}</h2>`);
-  text = text.replace(/\\subsection\*?\{([^}]*)\}/g, (_, title) => `<h3>${renderInline(title, refs, citations)}</h3>`);
-  text = text.replace(/\\subsubsection\*?\{([^}]*)\}/g, (_, title) => `<h4>${renderInline(title, refs, citations)}</h4>`);
-  const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
-  return blocks.map((block) => {
-    const restored = block.replace(/@@DISPLAY(\d+)@@/g, (_, index) => displayMath[Number(index)]);
-    if (block.trim().startsWith("<")) return restored;
-    const rendered = renderInline(block, refs, citations).replace(/@@DISPLAY(\d+)@@/g, (_, index) => displayMath[Number(index)]);
-    const isKeywords = /\\textbf\{Keywords:\}/i.test(block);
-    return block.trim().startsWith("@@DISPLAY") ? rendered : `<p${isKeywords ? ' class="keywords"' : ""}>${rendered.replace(/\n/g, " ")}</p>`;
-  }).join("");
+  text = text.replace(/\\(section|subsection|subsubsection)\*?\{([^}]*)\}/g, (_, kind, title) => {
+    const level = kind === "section" ? 2 : kind === "subsection" ? 3 : 4;
+    return keep("<h" + level + ">" + renderInline(title, refs, citations) + "</h" + level + ">");
+  });
+  const token = new RegExp("(" + prefix + "\\d+END)", "g");
+  let paragraph = "";
+  let output = "";
+  const flush = () => {
+    if (!paragraph.trim()) { paragraph = ""; return; }
+    const keywords = /\\textbf\{Keywords:\}/i.test(paragraph);
+    const rendered = renderInline(paragraph.trim(), refs, citations).replace(token, (marker) => {
+      const index = Number(marker.slice(prefix.length, -3));
+      return fragments[index].html;
+    });
+    output += '<p' + (keywords ? ' class="keywords"' : "") + ">" + rendered.replace(/\n/g, " ") + "</p>";
+    paragraph = "";
+  };
+  for (const part of text.split(token)) {
+    if (part.startsWith(prefix) && new RegExp("^" + prefix + "\\d+END$").test(part)) {
+      const fragment = fragments[Number(part.slice(prefix.length, -3))];
+      if (fragment.block) { flush(); output += fragment.html; }
+      else paragraph += part;
+    } else {
+      const paragraphs = part.split(/\n\s*\n/);
+      paragraphs.forEach((piece, index) => { if (index) flush(); paragraph += piece; });
+    }
+  }
+  flush();
+  return output;
 }
 
 function renderLatex(source: string) {

@@ -12,6 +12,29 @@ vm.createContext(context);
 vm.runInContext(ts.transpile(parser, { target: ts.ScriptTarget.ES2022 }), context);
 const render = (source) => context.renderLatex(source);
 
+test('source HTML is displayed as text rather than active elements', () => {
+  const html = render('<img src=x onerror=alert(1)>');
+  assert.doesNotMatch(html, /<img/);
+  assert.match(html, /&lt;img/);
+});
+
+test('adjacent headings and paragraphs retain inline formatting', () => {
+  const html = render(String.raw`Before \section{Title}After \textbf{bold}`);
+  assert.match(html, /<p>Before<\/p><h2>1\s+Title<\/h2><p>After <strong>bold<\/strong><\/p>/);
+});
+
+test('display math is a separate block even within a paragraph', () => {
+  const html = render(String.raw`Before $$x=1$$ After`);
+  assert.match(html, /^<p>Before<\/p><div class="math-display">/);
+  assert.match(html, /<\/div><p>After<\/p>$/);
+  assert.doesNotMatch(html, /katex-error/);
+});
+
+test('document links reject executable URLs and retain HTTPS links', () => {
+  assert.doesNotMatch(render(String.raw`\href{javascript:alert(1)}{Click}`), /href=/);
+  assert.match(render(String.raw`\href{https://example.com}{Example}`), /href="https:\/\/example.com"/);
+});
+
 test('unfinished environments remain renderable during typing', () => {
   assert.match(render('\\begin{abstract}Still writing'), /Still writing/);
   assert.match(render('\\begin{quote}\\begin{abstract}Nested draft'), /Nested draft/);
