@@ -338,6 +338,7 @@ export default function Editor() {
   const userZoomedRef = useRef(false);
   const panRef = useRef({ x: 0, y: 0, left: 0, top: 0 });
   const highlightRef = useRef<HTMLPreElement>(null);
+  const sourceRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const paperFrameRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -408,9 +409,26 @@ export default function Editor() {
   }
 
   function updateSelection(selectionStart: number, selectionEnd: number) {
-    setActiveLine(source.slice(0, selectionStart).split("\n").length - 1);
+    const currentSource = sourceRef.current?.value ?? source;
+    setActiveLine(currentSource.slice(0, selectionStart).split("\n").length - 1);
     setHasSelection(selectionStart !== selectionEnd);
   }
+
+  useEffect(() => {
+    const textarea = sourceRef.current;
+    if (!textarea) return;
+    const syncSelection = () => {
+      if (document.activeElement !== textarea) return;
+      setActiveLine(textarea.value.slice(0, textarea.selectionStart).split("\n").length - 1);
+      setHasSelection(textarea.selectionStart !== textarea.selectionEnd);
+    };
+    document.addEventListener("selectionchange", syncSelection);
+    textarea.addEventListener("selectionchange", syncSelection);
+    return () => {
+      document.removeEventListener("selectionchange", syncSelection);
+      textarea.removeEventListener("selectionchange", syncSelection);
+    };
+  }, []);
 
   function setPreviewZoom(next: number) {
     const frame = paperFrameRef.current;
@@ -498,7 +516,7 @@ export default function Editor() {
       <section className={`workspace${draggingDivider ? " is-resizing" : ""}`} style={{ gridTemplateColumns: `minmax(0, ${split}fr) 8px minmax(0, ${100 - split}fr)` }}>
         <div className="pane editor-pane">
           <div className="pane-header"><div className="pane-title"><FileText size={15} /> main.tex</div><div className="pane-actions"><button className="small-button" onClick={copySource} title={copied ? "Copied" : "Copy source"} aria-label={copied ? "Copied" : "Copy source"}><Copy size={14} /></button><button className="small-button" onClick={() => { setSource(STARTER); window.localStorage.removeItem("latexboi:source"); }} title="Reset document" aria-label="Reset document"><RotateCcw size={14} /></button></div></div>
-          <div className="editor-wrap"><div className="line-numbers" ref={lineNumbersRef}>{source.split("\n").map((_, index) => <span className={index === activeLine && !hasSelection ? "active" : ""} key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea wrap="soft" spellCheck={false} value={source} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.style.transform = `translate(${-event.currentTarget.scrollLeft}px, ${-event.currentTarget.scrollTop}px)`; } if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop; }} onSelect={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onClick={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onKeyUp={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onChange={(event) => { setSource(event.target.value); updateSelection(event.target.selectionStart, event.target.selectionEnd); }} aria-label="LaTeX source editor" /></div></div>
+          <div className="editor-wrap"><div className="line-numbers" ref={lineNumbersRef}>{source.split("\n").map((_, index) => <span className={index === activeLine && !hasSelection ? "active" : ""} key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea ref={sourceRef} wrap="off" spellCheck={false} value={source} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.style.transform = `translate(${-event.currentTarget.scrollLeft}px, ${-event.currentTarget.scrollTop}px)`; } if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop; }} onSelect={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onClick={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onKeyUp={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onChange={(event) => { setSource(event.target.value); updateSelection(event.target.selectionStart, event.target.selectionEnd); }} aria-label="LaTeX source editor" /></div></div>
         </div>
 
         <div className="divider" role="separator" aria-orientation="vertical" aria-label="Resize editor and preview" aria-valuemin={30} aria-valuemax={70} aria-valuenow={Math.round(split)} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); setDraggingDivider(true); moveDivider(event.clientX); }} onPointerMove={(event) => { if (draggingDivider) moveDivider(event.clientX); }} onPointerUp={(event) => { event.currentTarget.releasePointerCapture(event.pointerId); setDraggingDivider(false); }} onPointerCancel={() => setDraggingDivider(false)} />
