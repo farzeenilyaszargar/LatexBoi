@@ -1,75 +1,95 @@
 export const STARTER = String.raw`\documentclass[11pt,a4paper]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
 
-% Replace the title and author details with your own.
-% Type a backslash to explore command suggestions.
-\title{Your Research Paper Title}
-\author{Your Name \\ Department, University or Institution}
+% Welcome to Unleaf! This is a fictional demonstration paper.
+% Type a backslash to explore autocomplete. Edit anything.
+\title{A-Peeling Results: The Banana Productivity Paradox}
+\author{Dr. Penny Peel \\ Institute of Extremely Convenient Conclusions}
 \date{}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Can a banana improve academic productivity, or does it merely improve the appearance of a desk? We conducted an entirely fictional study of twelve imaginary researchers, three banana conditions, and one suspiciously empty fruit bowl. Yellow bananas increased snack satisfaction, green bananas encouraged patience, and overripe bananas produced a statistically impressive quantity of banana bread. We conclude that fruit is useful, but it cannot write your literature review.
 \end{abstract}
 
 \noindent
-\textbf{Keywords:} research topic, method, application, evaluation
+\textbf{Keywords:} bananas, productivity, snack science, questionable methodology
 
 \section{Introduction}
-Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla. Maecenas faucibus mollis interdum, aenean lacinia bibendum nulla sed consectetur. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+The modern researcher faces three obstacles: difficult questions, approaching deadlines, and remembering where lunch went. The banana offers an elegant response to the third. It arrives in its own packaging, requires no charger, and has never requested a software update.
 
-Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+Previous fictional work suggests that keeping a banana beside a laptop creates the \emph{impression of preparedness} \cite{peel}. Our question is simpler: does the banana help us work, or do we just enjoy having a curved yellow colleague?
 
-\subsection{Research Question}
-Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla. Maecenas faucibus mollis interdum, aenean lacinia bibendum nulla sed consectetur.
+\section{Methods}
+\label{methods}
+Twelve imaginary volunteers completed the same writing task. Each received a laptop, a blank document, and a banana with no relevant qualifications. The protocol had three steps:
+\begin{enumerate}
+\item Place the banana within respectful conversational distance.
+\item Write for twenty minutes without checking the fruit for notifications.
+\item Record words written, snacks consumed, and excuses invented.
+\end{enumerate}
 
-\section{Related Work}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+\subsection{The Peel Productivity Index}
+We defined a deliberately unserious score:
+\[
+  P = \frac{w + 10s}{1 + d}
+\]
+Here, $w$ is the number of words written, $s$ counts satisfying snacks, and $d$ counts distractions. The coefficient $10$ was chosen because it looked confident. All measurements were stored in \texttt{banana.csv}; none should guide real decisions.
 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\subsection{Controls}
+\begin{itemize}
+\item \textbf{Green:} a promising snack scheduled for next Thursday.
+\item \textbf{Yellow:} ready to eat and unwilling to attend meetings.
+\item \textbf{Spotted:} one missed deadline away from becoming bread.
+\end{itemize}
 
-\section{Methodology}
-Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla. Maecenas faucibus mollis interdum, aenean lacinia bibendum nulla sed consectetur. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-
-\subsection{Data and Procedure}
-Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-
-% This deliberate break keeps the starter organized into two pages.
-% Remove it when you prefer automatic pagination for your finished paper.
+% A deliberate break keeps this demonstration on two pages.
+% Remove it to let your own paper paginate automatically.
 \newpage
 
 \section{Results}
-Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla.
+The yellow condition produced the highest fictional writing total. The spotted condition produced the best afternoon. Table entries below are invented demonstration data, not experimental evidence.
 
-\subsection{Evaluation}
-Maecenas faucibus mollis interdum, aenean lacinia bibendum nulla sed consectetur. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+\begin{tabular}{lrr}
+\toprule
+Condition & Words written & Snacks consumed \\
+\midrule
+Green & 240 & 0 \\
+Yellow & 420 & 1 \\
+Spotted & 180 & 2 \\
+\bottomrule
+\end{tabular}
 
-Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-\[
-  \bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i
-\]
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Compared with green bananas, the yellow condition increased imaginary word count by $75\%$. This sounds excellent until one remembers that we invented both numbers. The spotted group submitted fewer words but attached a recipe \cite{crumb}, which the review committee accepted as supplementary material.
 
 \section{Discussion}
-Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla. Maecenas faucibus mollis interdum, aenean lacinia bibendum nulla sed consectetur. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+The procedure in Section \ref{methods} cannot separate the effect of a banana from the effect of finally taking a break. Nevertheless, the results support one practical observation: a snack is often more helpful than a fourth rearrangement of your document title.
 
-Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+\begin{quote}
+The banana did not solve my research problem, but it listened without suggesting that I add blockchain.
+\end{quote}
+
+This anonymous, fictional participant captures the central distinction between \textbf{nutritional support} and \textit{intellectual contribution}. A banana may provide the former. Listing it as a coauthor requires a more generous authorship policy than ours.
 
 \subsection{Limitations}
-Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla.
+Our sample was imaginary, the experiment was never performed, and the lead investigator ate the control group. The index ignores sleep, task difficulty, and whether the laptop was switched on. Consequently, \underline{no causal claims are justified}. A replication should begin by actually conducting a study.
 
 \section{Conclusion}
-Maecenas faucibus mollis interdum, aenean lacinia bibendum nulla sed consectetur. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Bananas make agreeable desk companions and poor principal investigators. Future work will compare apples, biscuits, and the radical intervention of going outside. Until then, write a paragraph, take a break, and keep the peel away from your keyboard.
 
 \section*{Acknowledgments}
-Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla.
+We thank the fruit bowl for its service and the toaster for declining to review this manuscript. This paper was prepared in \href{https://unleaf.lol}{Unleaf}, where the only thing you need to bring is your next idea.
 
-\section*{References}
-Maecenas faucibus mollis interdum, aenean lacinia bibendum nulla sed consectetur. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+\begin{thebibliography}{9}
+\bibitem{peel}
+P. Peel. \textit{Fruit on Desks: A Theory of Looking Busy}. Journal of Imaginary Snack Science, 2026. Fictional reference.
+\bibitem{crumb}
+B. Crumb. \textit{When Experiments Become Banana Bread}. Proceedings of the Kitchen Counter, 2026. Fictional reference.
+\end{thebibliography}
 
 \end{document}`;
