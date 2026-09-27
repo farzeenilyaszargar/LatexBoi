@@ -1,0 +1,15 @@
+# Unleaf
+
+> Unleaf is a free online LaTeX editor with no login, command autocomplete, live preview, browser-local drafts, and PDF export.
+
+## Pages
+- [Editor](https://www.unleaf.lol/): Write and preview a LaTeX document in the browser.
+- [Guide](https://www.unleaf.lol/guide): Getting started, commands, keyboard shortcuts, export instructions, storage behavior, and limitations.
+- [Sitemap](https://www.unleaf.lol/sitemap.xml): Public canonical URLs.
+
+## Product facts
+- Drafts are stored locally in the browser, not synced across devices.
+- The preview uses a browser-based renderer, not a full TeX compiler.
+- Arbitrary packages and advanced document classes are not fully supported.
+- PDF export opens the browser print dialog.
+- Unleaf is independent and is not affiliated with Overleaf.

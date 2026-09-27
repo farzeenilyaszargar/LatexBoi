@@ -1,23 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SITE_URL, SITE_DESCRIPTION } from "./seo";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://unleaf.lol"),
+  metadataBase: new URL(SITE_URL),
   title: "Unleaf | Write Research Papers With Ease",
-  description: "Write research papers with ease using Unleaf, a free online LaTeX editor with live preview, local draft saving, and PDF export.",
+  description: SITE_DESCRIPTION,
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
   applicationName: "Unleaf",
   alternates: { canonical: "/" },
   openGraph: {
-    type: "website", url: "https://unleaf.lol/", siteName: "Unleaf", locale: "en_US",
+    type: "website", url: SITE_URL, siteName: "Unleaf", locale: "en_US",
     title: "Unleaf | Write Research Papers With Ease",
     description: "A lightweight, no-login LaTeX workspace for writing, previewing, and exporting research papers.",
-    images: [{ url: "https://unleaf.lol/unleaf-social.png", width: 1672, height: 941, alt: "Unleaf — the no-login LaTeX editor" }],
+    images: [{ url: `${SITE_URL}/unleaf-social.png`, width: 1672, height: 941, type: "image/png", alt: "Unleaf — the no-login LaTeX editor" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Unleaf | Write Research Papers With Ease",
     description: "Write, preview, and export research papers with ease. No login required.",
-    images: ["https://unleaf.lol/unleaf-social.png"],
+    images: [`${SITE_URL}/unleaf-social.png`],
   },
   other: { "twitter:image:alt": "Unleaf — the no-login LaTeX editor" },
   icons: {
