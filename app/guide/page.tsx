@@ -5,10 +5,11 @@ import "./guide.css";
 
 const title = "Free Online LaTeX Editor: Research Paper Guide | Unleaf";
 const description = "Learn to write a research paper in Unleaf: LaTeX commands, abstracts, equations, tables, autocomplete shortcuts, local saving, and PDF export without an account.";
+const ogImagePath = "/unleaf-social.png";
 export const metadata: Metadata = {
   title, description, alternates: { canonical: "/guide" },
-  openGraph: { title, description, url: `${SITE_URL}/guide`, type: "article", images: [`${SITE_URL}/unleaf-social.png`] },
-  twitter: { title, description, card: "summary_large_image", images: [`${SITE_URL}/unleaf-social.png`] },
+  openGraph: { title, description, url: `${SITE_URL}/guide`, type: "article", images: [{ url: ogImagePath, width: 1672, height: 941, alt: "Unleaf — the no-login LaTeX editor" }] },
+  twitter: { title, description, card: "summary_large_image", images: [ogImagePath] },
 };
 
 export default function Guide() {
