@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import { Copy, Download, FileCode2, Minus, Moon, PanelsTopLeft, Plus, RotateCcw, Sun, Upload } from "lucide-react";
+import { Copy, Download, FileCode2, Minus, Moon, PanelsTopLeft, Plus, RotateCcw, Sun, Upload, Search } from "lucide-react";
 import katex from "katex";
 import { flushSync } from "react-dom";
 import { readPreference, savePreference } from "./storage";
 import { wheelZoom } from "./preview";
 import Autocomplete from "./autocomplete";
+import FindReplace from "./find-replace";
 import { moveLines } from "./line-move";
 
 import "katex/dist/katex.min.css";
@@ -408,6 +409,7 @@ export default function Editor() {
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const paperFrameRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [findOpen, setFindOpen] = useState(false);
   const [fileError, setFileError] = useState("");
   const [draggingFile, setDraggingFile] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -522,7 +524,21 @@ export default function Editor() {
     setHasSelection(selectionStart !== selectionEnd);
   }
 
+  function applyEdit(start: number, end: number, text: string, selectionStart = start + text.length, selectionEnd = selectionStart) {
+    const el = sourceRef.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(start, end);
+    if (!document.execCommand("insertText", false, text)) el.setRangeText(text, start, end, "end");
+    setSource(el.value);
+    el.setSelectionRange(selectionStart, selectionEnd);
+    updateSelection(selectionStart, selectionEnd);
+  }
+
   function handleEditorKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.defaultPrevented || event.nativeEvent.isComposing) return;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") { event.preventDefault(); setFindOpen(true); return; }
+    if (event.key === "Escape") { setFindOpen(false); return; }
     if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
     const textarea = sourceRef.current;
     if (!textarea) return;
@@ -647,7 +663,8 @@ export default function Editor() {
         <div className={`pane editor-pane${draggingFile ? " file-dragging" : ""}`} onDragOver={event => { if (event.dataTransfer.types.includes("Files")) { event.preventDefault(); setDraggingFile(true); } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDraggingFile(false); }} onDrop={event => { event.preventDefault(); setDraggingFile(false); void importSource(event.dataTransfer.files[0]); }}>
           <input type="file" accept=".tex,text/plain" hidden ref={fileInputRef} onChange={event => { void importSource(event.target.files?.[0]); event.target.value = ""; }} />
           {fileError && <div role="alert" className="editor-message">{fileError}</div>}
-          <div className="pane-header"><div className="pane-title"><FileCode2 size={15} /> main.tex</div><div className="pane-actions"><button className="small-button" onClick={() => fileInputRef.current?.click()} title="Open .tex (or drop a file here)" aria-label="Open .tex"><Upload size={14} /></button><button className="small-button" onClick={downloadSource} title="Download .tex" aria-label="Download .tex"><Download size={14} /></button><button className="small-button" onClick={copySource} title={copied ? "Copied" : "Copy source"} aria-label={copied ? "Copied" : "Copy source"}><Copy size={14} /></button><button className="small-button" onClick={() => { if (window.confirm("Replace your current document with the starter? Copy your source first if you want to keep it.")) setSource(STARTER); }} title="Reset document" aria-label="Reset document"><RotateCcw size={14} /></button></div></div>
+          <div className="pane-header"><div className="pane-title"><FileCode2 size={15} /> main.tex</div><div className="pane-actions"><button className="small-button" onClick={() => setFindOpen(value => !value)} title="Find and replace (Ctrl/Cmd+F)" aria-label="Find and replace"><Search size={14} /></button><button className="small-button" onClick={() => fileInputRef.current?.click()} title="Open .tex (or drop a file here)" aria-label="Open .tex"><Upload size={14} /></button><button className="small-button" onClick={downloadSource} title="Download .tex" aria-label="Download .tex"><Download size={14} /></button><button className="small-button" onClick={copySource} title={copied ? "Copied" : "Copy source"} aria-label={copied ? "Copied" : "Copy source"}><Copy size={14} /></button><button className="small-button" onClick={() => { if (window.confirm("Replace your current document with the starter? Copy your source first if you want to keep it.")) setSource(STARTER); }} title="Reset document" aria-label="Reset document"><RotateCcw size={14} /></button></div></div>
+          {findOpen && <FindReplace source={source} textarea={sourceRef} apply={applyEdit} close={() => setFindOpen(false)} />}
           <div className="editor-wrap"><div className="line-numbers" ref={lineNumbersRef}>{source.split("\n").map((_, index) => <span className={index === activeLine && !hasSelection ? "active" : ""} key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea ref={sourceRef} wrap="off" spellCheck={false} value={source} onKeyDown={handleEditorKeyDown} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.style.transform = `translate(${-event.currentTarget.scrollLeft}px, ${-event.currentTarget.scrollTop}px)`; } if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop; }} onSelect={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onClick={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onKeyUp={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onChange={(event) => { setSource(event.target.value); updateSelection(event.target.selectionStart, event.target.selectionEnd); }} aria-label="LaTeX source editor" /><Autocomplete textarea={sourceRef} onApply={setSource} /></div></div>
         </div>
 
