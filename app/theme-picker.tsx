@@ -8,7 +8,6 @@ export const THEMES = [
   { id: "dark-green", name: "Dark Green", note: "Charcoal & muted mint", colors: ["#171b1a", "#222825", "#90c9ad"] },
   { id: "dark-academia", name: "Dark Academia", note: "Espresso & antique gold", colors: ["#201d19", "#2b2722", "#d8bb85"] },
   { id: "light-academia", name: "Light Academia", note: "Paper white & scholarly blue", colors: ["#f6f7f9", "#ffffff", "#356ae6"] },
-  { id: "overleaf-esque", name: "Overleaf Esque", note: "Crisp gray & classic green", colors: ["#f0f2f3", "#ffffff", "#286b25"] },
 ] as const;
 export type Theme = typeof THEMES[number]["id"];
 export function savedTheme(value: string | null): Theme {

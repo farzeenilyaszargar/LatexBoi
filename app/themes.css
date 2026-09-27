@@ -19,11 +19,6 @@
   --accent:#d8bb85; --accent-ink:#2b2113; --preview:#171510;
   --code:#e2d9c9; --command:#cbb3dc; --comment:#b3a68f; --bracket:#d8bb85; color-scheme:dark;
 }
-:root[data-theme="overleaf-esque"] {
-  --ink:#2f3437; --muted:#69757a; --line:#d7dfe1; --surface:#fff; --canvas:#f4f6f6;
-  --accent:#2f8f3a; --accent-ink:#fff; --preview:#e4e8e8;
-  --code:#30383c; --command:#286b8a; --comment:#71827b; --bracket:#9a5d26; color-scheme:light;
-}
 :root .code-editor pre { color:var(--code); }
 :root .syntax-command { color:var(--command); }
 :root .syntax-comment { color:var(--comment); }
