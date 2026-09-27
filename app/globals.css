@@ -12,6 +12,7 @@ button, textarea { font:inherit; }
 button { cursor:pointer; }
 .guide-link { color:var(--accent); font-size:12px; margin-left:12px; text-underline-offset:3px; }
 .editor-message { padding:8px; color:var(--ink); font-size:12px; }
+.word-count { color:var(--muted); font-size:10px; font-weight:400; white-space:nowrap; }
 .find-bar { flex:none; padding:8px; border:1px solid var(--line); background:var(--surface); border-radius:8px; margin-bottom:6px; font-size:11px; }
 .tool-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .tool-row + .tool-row { margin-top:6px; }
