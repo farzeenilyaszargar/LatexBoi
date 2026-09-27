@@ -20,9 +20,9 @@
   --code:#e2d9c9; --command:#cbb3dc; --comment:#b3a68f; --bracket:#d8bb85; color-scheme:dark;
 }
 :root[data-theme="night"] {
-  --ink:#e7edf7; --muted:#9aa8bb; --line:#303b4b; --surface:#171c24; --canvas:#0b0d10;
-  --accent:#4d9cff; --accent-ink:#07111f; --preview:#07090c;
-  --code:#dce7f7; --command:#65b1ff; --comment:#8495aa; --bracket:#8cbcff; color-scheme:dark;
+  --ink:#e5e7eb; --muted:#9ca3af; --line:#34383f; --surface:#1f2329; --canvas:#121417;
+  --accent:#4d9cff; --accent-ink:#07111f; --preview:#0e1013;
+  --code:#d7dbe2; --command:#66aaff; --comment:#8d949e; --bracket:#a6adb8; color-scheme:dark;
 }
 :root .code-editor pre { color:var(--code); }
 :root .syntax-command { color:var(--command); }
