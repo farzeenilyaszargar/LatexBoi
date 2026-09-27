@@ -1,8 +1,8 @@
 html:has(.guide-shell),body:has(.guide-shell) { height:100%; overflow:hidden; }
 .guide-shell { height:100vh; max-width:900px; margin:0 auto; padding:24px clamp(20px,5vw,64px); color:var(--ink); overflow:hidden; display:flex; flex-direction:column; }
 .guide-nav { display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.guide-brand { display:flex; align-items:center; gap:9px; color:var(--ink) !important; font-size:16px; font-weight:700; letter-spacing:-.03em; text-decoration:none; }
-.guide-brand img { width:28px; height:28px; }
+.guide-brand { display:flex; align-items:center; gap:8px; color:var(--ink) !important; font-size:16px; font-weight:700; line-height:1; letter-spacing:-.03em; text-decoration:none; }
+.guide-brand img { display:block; width:26px; height:26px; flex:none; }
 .guide-button { display:inline-flex; align-items:center; gap:10px; background:var(--accent); color:#fff !important; -webkit-text-fill-color:#fff; padding:10px 15px; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600; transition:transform .18s ease,opacity .18s ease; }
 .guide-button:hover { opacity:.88; transform:translateY(-1px); }
 .guide-article { width:100%; max-width:700px; margin:0 auto; flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center; }
