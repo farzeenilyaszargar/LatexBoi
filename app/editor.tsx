@@ -476,6 +476,15 @@ export default function Editor() {
     }
   }
 
+  function downloadSource() {
+    const url = URL.createObjectURL(new Blob([source], { type: "text/plain;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "main.tex";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   async function exportPdf() {
     await document.fonts.ready;
     flushSync(() => setPages(paginateHtml(html, paperFrameRef.current)));
@@ -619,7 +628,7 @@ export default function Editor() {
 
       <section className={`workspace${draggingDivider ? " is-resizing" : ""}`} style={{ gridTemplateColumns: `minmax(0, ${split}fr) 8px minmax(0, ${100 - split}fr)` }}>
         <div className="pane editor-pane">
-          <div className="pane-header"><div className="pane-title"><FileCode2 size={15} /> main.tex</div><div className="pane-actions"><button className="small-button" onClick={copySource} title={copied ? "Copied" : "Copy source"} aria-label={copied ? "Copied" : "Copy source"}><Copy size={14} /></button><button className="small-button" onClick={() => { if (window.confirm("Replace your current document with the starter? Copy your source first if you want to keep it.")) setSource(STARTER); }} title="Reset document" aria-label="Reset document"><RotateCcw size={14} /></button></div></div>
+          <div className="pane-header"><div className="pane-title"><FileCode2 size={15} /> main.tex</div><div className="pane-actions"><button className="small-button" onClick={downloadSource} title="Download .tex" aria-label="Download .tex"><Download size={14} /></button><button className="small-button" onClick={copySource} title={copied ? "Copied" : "Copy source"} aria-label={copied ? "Copied" : "Copy source"}><Copy size={14} /></button><button className="small-button" onClick={() => { if (window.confirm("Replace your current document with the starter? Copy your source first if you want to keep it.")) setSource(STARTER); }} title="Reset document" aria-label="Reset document"><RotateCcw size={14} /></button></div></div>
           <div className="editor-wrap"><div className="line-numbers" ref={lineNumbersRef}>{source.split("\n").map((_, index) => <span className={index === activeLine && !hasSelection ? "active" : ""} key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea ref={sourceRef} wrap="off" spellCheck={false} value={source} onKeyDown={handleEditorKeyDown} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.style.transform = `translate(${-event.currentTarget.scrollLeft}px, ${-event.currentTarget.scrollTop}px)`; } if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop; }} onSelect={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onClick={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onKeyUp={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onChange={(event) => { setSource(event.target.value); updateSelection(event.target.selectionStart, event.target.selectionEnd); }} aria-label="LaTeX source editor" /><Autocomplete textarea={sourceRef} onApply={setSource} /></div></div>
         </div>
 
