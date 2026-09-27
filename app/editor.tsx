@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import { Copy, Download, FileCode2, Minus, Moon, PanelsTopLeft, Plus, RotateCcw, Sun } from "lucide-react";
+import { Copy, Download, FileCode2, Minus, PanelsTopLeft, Plus, RotateCcw } from "lucide-react";
 import katex from "katex";
 import { flushSync } from "react-dom";
 import { readPreference, savePreference } from "./storage";
@@ -9,6 +9,8 @@ import { wheelZoom } from "./preview";
 import Autocomplete from "./autocomplete";
 import { bracketEdit, commentEdit, formatEdit } from "./editing";
 import PageJump from "./page-jump";
+import ThemePicker, { savedTheme, type Theme } from "./theme-picker";
+import "./themes.css";
 import { countWords } from "./word-count";
 import { moveLines } from "./line-move";
 
@@ -396,10 +398,12 @@ export default function Editor() {
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState("Loading draft…");
   const [copyError, setCopyError] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<Theme>("light-academia");
   const [paperScale, setPaperScale] = useState(1);
   const [viewedPage, setViewedPage] = useState(1);
   const [activeLine, setActiveLine] = useState(0);
+  const [selectedText, setSelectedText] = useState("");
+  const selectedWordCount = useMemo(() => countWords(selectedText), [selectedText]);
   const [hasSelection, setHasSelection] = useState(false);
   const [split, setSplit] = useState(50);
   const [draggingDivider, setDraggingDivider] = useState(false);
@@ -436,9 +440,9 @@ export default function Editor() {
 
   useEffect(() => {
     const savedSource = readPreference("latexboi:source");
-    const savedTheme = readPreference("latexboi:theme").value;
+    const storedTheme = readPreference("latexboi:theme").value;
     if (savedSource.value !== null) setSource(savedSource.value);
-    if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
+    setTheme(savedTheme(storedTheme));
     setSaveState(savedSource.available ? "Saved locally" : "Not saved — storage unavailable");
     setHydrated(true);
   }, []);
@@ -498,6 +502,7 @@ export default function Editor() {
     const currentSource = sourceRef.current?.value ?? source;
     setActiveLine(currentSource.slice(0, selectionStart).split("\n").length - 1);
     setHasSelection(selectionStart !== selectionEnd);
+    setSelectedText(currentSource.slice(selectionStart, selectionEnd));
   }
 
   function applyEdit(start: number, end: number, text: string, selectionStart = start + text.length, selectionEnd = selectionStart) {
@@ -560,6 +565,7 @@ export default function Editor() {
       if (document.activeElement !== textarea) return;
       setActiveLine(textarea.value.slice(0, textarea.selectionStart).split("\n").length - 1);
       setHasSelection(textarea.selectionStart !== textarea.selectionEnd);
+      setSelectedText(textarea.value.slice(textarea.selectionStart, textarea.selectionEnd));
     };
     document.addEventListener("selectionchange", syncSelection);
     textarea.addEventListener("selectionchange", syncSelection);
@@ -665,12 +671,12 @@ export default function Editor() {
       <header className="topbar">
         <div className="brand" title="Unleaf — Less overhead. More paper."><span className="brand-mark"><img className="brand-logo" src="/unleaf.svg" alt="" /></span><span>Unleaf</span></div>
         <div className="topbar-center"><span className="saved" role="status">{copyError ? "Copy blocked — use Ctrl/Cmd+C" : saveState}</span></div>
-        <div className="topbar-actions"><a className="guide-link" href="/guide">LaTeX guide</a><button className="icon-button theme-button" onClick={() => setTheme((current) => current === "light" ? "dark" : "light")} title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>{theme === "light" ? <Moon size={16} /> : <Sun size={16} />}</button><button className="primary-button" onClick={exportPdf}><Download size={16} /> Export PDF</button></div>
+        <div className="topbar-actions"><a className="guide-link" href="/guide">LaTeX guide</a><ThemePicker theme={theme} choose={setTheme} /><button className="primary-button" onClick={exportPdf}><Download size={16} /> Export PDF</button></div>
       </header>
 
       <section className={`workspace${draggingDivider ? " is-resizing" : ""}`} style={{ gridTemplateColumns: `minmax(0, ${split}fr) 8px minmax(0, ${100 - split}fr)` }}>
         <div className="pane editor-pane">
-          <div className="pane-header"><div className="pane-title"><FileCode2 size={15} /> main.tex <span className="word-count" title="Approximate prose word count; excludes preamble, comments and math">{wordCount.toLocaleString("en-US")} words</span></div><div className="pane-actions"><button className="small-button" onClick={copySource} title={copied ? "Copied" : "Copy source"} aria-label={copied ? "Copied" : "Copy source"}><Copy size={14} /></button><button className="small-button" onClick={() => { if (window.confirm("Replace your current document with the starter? Copy your source first if you want to keep it.")) setSource(STARTER); }} title="Reset document" aria-label="Reset document"><RotateCcw size={14} /></button></div></div>
+          <div className="pane-header"><div className="pane-title"><FileCode2 size={15} /> main.tex <span className="word-count" title="Prose estimate: includes headings, title/author when using maketitle, captions and references. Excludes math, comments, code and command metadata; custom macros are not expanded.">{hasSelection ? `${selectedWordCount.toLocaleString("en-US")} selected / ` : ""}{wordCount.toLocaleString("en-US")} {wordCount === 1 ? "word" : "words"}</span></div><div className="pane-actions"><button className="small-button" onClick={copySource} title={copied ? "Copied" : "Copy source"} aria-label={copied ? "Copied" : "Copy source"}><Copy size={14} /></button><button className="small-button" onClick={() => { if (window.confirm("Replace your current document with the starter? Copy your source first if you want to keep it.")) setSource(STARTER); }} title="Reset document" aria-label="Reset document"><RotateCcw size={14} /></button></div></div>
           <div className="editor-wrap"><div className="line-numbers" ref={lineNumbersRef}>{source.split("\n").map((_, index) => <span className={index === activeLine && !hasSelection ? "active" : ""} key={index}>{index + 1}</span>)}</div><div className="code-editor"><pre ref={highlightRef} aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightedSource }} /><textarea ref={sourceRef} wrap="off" spellCheck={false} value={source} onKeyDown={handleEditorKeyDown} onScroll={(event) => { if (highlightRef.current) { highlightRef.current.style.transform = `translate(${-event.currentTarget.scrollLeft}px, ${-event.currentTarget.scrollTop}px)`; } if (lineNumbersRef.current) lineNumbersRef.current.scrollTop = event.currentTarget.scrollTop; }} onSelect={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onClick={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onKeyUp={(event) => updateSelection(event.currentTarget.selectionStart, event.currentTarget.selectionEnd)} onChange={(event) => { setSource(event.target.value); updateSelection(event.target.selectionStart, event.target.selectionEnd); }} aria-label="LaTeX source editor" /><Autocomplete textarea={sourceRef} onApply={setSource} /></div></div>
         </div>
 
