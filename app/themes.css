@@ -19,6 +19,11 @@
   --accent:#d8bb85; --accent-ink:#2b2113; --preview:#171510;
   --code:#e2d9c9; --command:#cbb3dc; --comment:#b3a68f; --bracket:#d8bb85; color-scheme:dark;
 }
+:root[data-theme="night"] {
+  --ink:#e4ebf5; --muted:#9aa9bc; --line:#344254; --surface:#1a2432; --canvas:#101722;
+  --accent:#7db4ff; --accent-ink:#0e1a2a; --preview:#0b111a;
+  --code:#dce8f7; --command:#8fc5ff; --comment:#8fa2b7; --bracket:#e8bd7c; color-scheme:dark;
+}
 :root .code-editor pre { color:var(--code); }
 :root .syntax-command { color:var(--command); }
 :root .syntax-comment { color:var(--comment); }
