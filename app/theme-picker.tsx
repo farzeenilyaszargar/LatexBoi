@@ -7,8 +7,8 @@ export const THEMES = [
   { id: "light-green", name: "Light Green", note: "White & soft sage", colors: ["#f6f8f7", "#ffffff", "#24704f"] },
   { id: "dark-green", name: "Dark Green", note: "Charcoal & muted mint", colors: ["#171b1a", "#222825", "#90c9ad"] },
   { id: "coffee", name: "Coffee", note: "Espresso & antique gold", colors: ["#201d19", "#2b2722", "#d8bb85"] },
-  { id: "night", name: "Dark Academia", note: "Dark gray & blue accents", colors: ["#121417", "#1f2329", "#4d9cff"] },
   { id: "light-academia", name: "Light Academia", note: "Paper white & scholarly blue", colors: ["#f6f7f9", "#ffffff", "#356ae6"] },
+  { id: "night", name: "Dark Academia", note: "Dark gray & blue accents", colors: ["#121417", "#1f2329", "#4d9cff"] },
 ] as const;
 export type Theme = typeof THEMES[number]["id"];
 export function savedTheme(value: string | null): Theme {
