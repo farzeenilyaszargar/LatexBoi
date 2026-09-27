@@ -8,17 +8,18 @@ export const metadata: Metadata = {
   applicationName: "Unleaf",
   alternates: { canonical: "/" },
   openGraph: {
-    type: "website", url: "/", siteName: "Unleaf", locale: "en_US",
+    type: "website", url: "https://unleaf.lol/", siteName: "Unleaf", locale: "en_US",
     title: "Unleaf | Write Research Papers With Ease",
     description: "A lightweight, no-login LaTeX workspace for writing, previewing, and exporting research papers.",
-    images: [{ url: "/unleaf-social.png", width: 1672, height: 941, alt: "Unleaf — the no-login LaTeX editor" }],
+    images: [{ url: "https://unleaf.lol/unleaf-social.png", width: 1672, height: 941, alt: "Unleaf — the no-login LaTeX editor" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Unleaf | Write Research Papers With Ease",
     description: "Write, preview, and export research papers with ease. No login required.",
-    images: [{ url: "/unleaf-social.png", width: 1672, height: 941, alt: "Unleaf — the no-login LaTeX editor" }],
+    images: ["https://unleaf.lol/unleaf-social.png"],
   },
+  other: { "twitter:image:alt": "Unleaf — the no-login LaTeX editor" },
   icons: {
     icon: { url: "/unleaf.svg", type: "image/svg+xml" },
     shortcut: "/unleaf.svg",
