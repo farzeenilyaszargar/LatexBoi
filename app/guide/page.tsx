@@ -31,7 +31,6 @@ export default function Guide() {
     </nav>
 
     <article className="guide-article">
-      <p className="guide-eyebrow">A SHORT NOTE</p>
       <h1>Overleaf made LaTeX feel like enterprise software.</h1>
       <p className="guide-lead">So I made Unleaf.</p>
 
