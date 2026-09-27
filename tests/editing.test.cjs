@@ -6,6 +6,17 @@ const ts = require("typescript");
 const context = { exports: {} };
 vm.runInNewContext(ts.transpile(fs.readFileSync("app/editing.ts", "utf8"), { module: ts.ModuleKind.CommonJS }), context);
 const { bracketEdit } = context.exports;
+const { commentEdit } = context.exports;
+test("comments a selection without touching the next unselected line", () => {
+  const edit = commentEdit("one\ntwo\nthree", 0, 8);
+  assert.equal(edit.text, "% one\n% two");
+  assert.equal(edit.selectionEnd, 12);
+});
+test("uncomments indented lines and retains caret position", () => {
+  const edit = commentEdit("  % banana", 10, 10);
+  assert.equal(edit.text, "  banana");
+  assert.equal(edit.selectionStart, 8);
+});
 test("brackets wrap selected text and place the cursor inside empty pairs", () => {
   assert.equal(bracketEdit("banana", 0, 6, "{").text, "{banana}");
   assert.equal(bracketEdit("", 0, 0, "[").selectionStart, 1);

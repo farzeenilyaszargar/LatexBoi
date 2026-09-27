@@ -7,7 +7,7 @@ import { flushSync } from "react-dom";
 import { readPreference, savePreference } from "./storage";
 import { wheelZoom } from "./preview";
 import Autocomplete from "./autocomplete";
-import { bracketEdit } from "./editing";
+import { bracketEdit, commentEdit } from "./editing";
 import { countWords } from "./word-count";
 import FindReplace from "./find-replace";
 import { moveLines } from "./line-move";
@@ -541,6 +541,13 @@ export default function Editor() {
   function handleEditorKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.defaultPrevented || event.nativeEvent.isComposing) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") { event.preventDefault(); setFindOpen(true); return; }
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && (event.key === "/" || event.code === "Slash")) {
+      event.preventDefault();
+      const el = event.currentTarget;
+      const edit = commentEdit(el.value, el.selectionStart, el.selectionEnd);
+      applyEdit(edit.start, edit.end, edit.text, edit.selectionStart, edit.selectionEnd);
+      return;
+    }
     if (event.key === "Escape") { setFindOpen(false); return; }
     if (!event.ctrlKey && !event.metaKey && !event.altKey) {
       const el = event.currentTarget;
