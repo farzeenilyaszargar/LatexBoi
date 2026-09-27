@@ -7,7 +7,7 @@ import { flushSync } from "react-dom";
 import { readPreference, savePreference } from "./storage";
 import { wheelZoom } from "./preview";
 import Autocomplete from "./autocomplete";
-import { bracketEdit, commentEdit } from "./editing";
+import { bracketEdit, commentEdit, formatEdit } from "./editing";
 import PageJump from "./page-jump";
 import { countWords } from "./word-count";
 import { moveLines } from "./line-move";
@@ -513,6 +513,13 @@ export default function Editor() {
 
   function handleEditorKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.defaultPrevented || event.nativeEvent.isComposing) return;
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && ["b", "i"].includes(event.key.toLowerCase())) {
+      event.preventDefault();
+      const el = event.currentTarget;
+      const edit = formatEdit(el.value, el.selectionStart, el.selectionEnd, event.key.toLowerCase() === "b" ? "textbf" : "textit");
+      applyEdit(edit.start, edit.end, edit.text, edit.selectionStart, edit.selectionEnd);
+      return;
+    }
     if ((event.ctrlKey || event.metaKey) && !event.altKey && (event.key === "/" || event.code === "Slash")) {
       event.preventDefault();
       const el = event.currentTarget;

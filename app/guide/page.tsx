@@ -46,6 +46,8 @@ Explain your question and why it matters.
         <tr><td>Explicit page break</td><td><code>{String.raw`\newpage`}</code></td></tr>
       </tbody></table></div>
       <p>Move a line or selected lines with Option + ↑/↓ on macOS or Alt + ↑/↓ on Windows and Linux. In the preview, drag to pan, scroll to move, and use Ctrl/Cmd + scroll to zoom. The percentage button fits the paper to the pane.</p>
+      <p>Select text and press Ctrl/Cmd + B for bold or Ctrl/Cmd + I for italic. With no selection, the cursor lands inside an empty formatting command. Ctrl/Cmd + / toggles comments on the current or selected lines. Opening braces, brackets, and parentheses automatically get a closing partner.</p>
+      <p>The editor shows an approximate prose word count, excluding the preamble, comments, and mathematics. Click the preview’s page indicator, type a page number, and press Enter to jump there.</p>
       <h2 id="export">Preview and export your paper as a PDF</h2>
       <p>The preview arranges the document into A4 pages. Use its page indicator to navigate your draft and inspect equations and tables before exporting. Click Export PDF to open your browser’s print dialog, then choose Save as PDF. Use A4 paper, no additional margins, and disable browser headers and footers.</p>
       <p>The paper stays white in both interface themes. If your browser offers background graphics, enable them when your document includes colored blocks. Check the print preview before saving.</p>

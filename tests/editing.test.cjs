@@ -7,6 +7,17 @@ const context = { exports: {} };
 vm.runInNewContext(ts.transpile(fs.readFileSync("app/editing.ts", "utf8"), { module: ts.ModuleKind.CommonJS }), context);
 const { bracketEdit } = context.exports;
 const { commentEdit } = context.exports;
+const { formatEdit } = context.exports;
+test("format shortcuts wrap selections and leave empty insertion points inside braces", () => {
+  const bold = formatEdit("a banana", 2, 8, "textbf");
+  assert.equal(bold.text, "\\textbf{banana}");
+  assert.equal(bold.selectionStart, 10);
+  assert.equal(bold.selectionEnd, 16);
+  const italic = formatEdit("", 0, 0, "textit");
+  assert.equal(italic.text, "\\textit{}");
+  assert.equal(italic.selectionStart, 8);
+  assert.equal(italic.selectionEnd, 8);
+});
 test("comments a selection without touching the next unselected line", () => {
   const edit = commentEdit("one\ntwo\nthree", 0, 8);
   assert.equal(edit.text, "% one\n% two");

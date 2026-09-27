@@ -1,5 +1,10 @@
 export type TextEdit = { start: number; end: number; text: string; selectionStart: number; selectionEnd: number };
 
+export function formatEdit(source: string, start: number, end: number, command: "textbf" | "textit"): TextEdit {
+  const prefix = "\\" + command + "{";
+  return { start, end, text: prefix + source.slice(start, end) + "}", selectionStart: start + prefix.length, selectionEnd: end + prefix.length };
+}
+
 export function commentEdit(source: string, start: number, end: number): TextEdit {
   const first = source.lastIndexOf("\n", start - 1) + 1;
   const probe = Math.max(start, end - (end > start ? 1 : 0));
