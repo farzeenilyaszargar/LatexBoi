@@ -12,8 +12,8 @@ html:has(.guide-shell),body:has(.guide-shell) { height:100%; overflow:hidden; }
 .guide-points p { margin:0; }
 .guide-copy { max-width:570px; margin:0; color:var(--ink); font-size:clamp(20px,2.5vw,24px); line-height:1.5; }
 .guide-copy strong { color:var(--ink); font-weight:650; }
-.guide-footer { margin-top:auto; padding-top:18px; border-top:1px solid var(--line); color:var(--muted); font-size:15px; }
-.guide-footer p { margin:0; }
-.guide-footer a { color:var(--accent); text-underline-offset:3px; }
+.guide-credit { display:flex; align-items:center; justify-content:center; gap:5px; margin:34px 0 0; color:var(--muted); font-size:15px; }
+.guide-credit svg { color:var(--accent); }
+.guide-credit a { color:var(--accent); text-underline-offset:3px; }
 @media (max-width:600px) { .guide-nav { align-items:flex-start; }.guide-button { padding:9px 11px; font-size:12px; }.guide-article h1 { font-size:23px; }.guide-lead,.guide-copy { font-size:19px; }.guide-points { font-size:19px; } }
 @media print { .guide-nav { display:none; } }

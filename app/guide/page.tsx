@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Heart } from "lucide-react";
 import { SITE_URL } from "../seo";
 import "./guide.css";
 
@@ -42,9 +43,7 @@ export default function Guide() {
 
       <p className="guide-copy">Just write LaTeX with <strong>autocomplete</strong>, compile instantly, and get your PDF.</p>
 
-      <footer className="guide-footer">
-        <p>Made with love by <a href={twitterUrl} target="_blank" rel="noopener noreferrer">@farzeenilya</a></p>
-      </footer>
+      <p className="guide-credit"><span>Made with</span> <Heart size={14} fill="currentColor" aria-hidden="true" /> <span>by <a href={twitterUrl} target="_blank" rel="noopener noreferrer">@farzeenilya</a></span></p>
     </article>
   </main>;
 }
