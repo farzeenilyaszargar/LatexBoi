@@ -7,6 +7,7 @@ import { flushSync } from "react-dom";
 import { readPreference, savePreference } from "./storage";
 import { wheelZoom } from "./preview";
 import Autocomplete from "./autocomplete";
+import { bracketEdit } from "./editing";
 import { countWords } from "./word-count";
 import FindReplace from "./find-replace";
 import { moveLines } from "./line-move";
@@ -541,6 +542,18 @@ export default function Editor() {
     if (event.defaultPrevented || event.nativeEvent.isComposing) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") { event.preventDefault(); setFindOpen(true); return; }
     if (event.key === "Escape") { setFindOpen(false); return; }
+    if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+      const el = event.currentTarget;
+      const edit = bracketEdit(el.value, el.selectionStart, el.selectionEnd, event.key);
+      if (edit) {
+        event.preventDefault();
+        if (edit.start === edit.end && !edit.text) {
+          el.setSelectionRange(edit.selectionStart, edit.selectionEnd);
+          updateSelection(edit.selectionStart, edit.selectionEnd);
+        } else applyEdit(edit.start, edit.end, edit.text, edit.selectionStart, edit.selectionEnd);
+        return;
+      }
+    }
     if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
     const textarea = sourceRef.current;
     if (!textarea) return;
