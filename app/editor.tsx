@@ -8,6 +8,7 @@ import { readPreference, savePreference } from "./storage";
 import { wheelZoom } from "./preview";
 import Autocomplete from "./autocomplete";
 import { bracketEdit, commentEdit } from "./editing";
+import PageJump from "./page-jump";
 import { countWords } from "./word-count";
 import { moveLines } from "./line-move";
 
@@ -612,6 +613,15 @@ export default function Editor() {
     frame.scrollTop = panRef.current.top - (event.clientY - panRef.current.y);
   }
 
+  function jumpToPage(page: number) {
+    const frame = paperFrameRef.current;
+    const paper = frame?.querySelectorAll<HTMLElement>(".paper")[page - 1];
+    if (!frame || !paper) return;
+    const bounds = paper.getBoundingClientRect();
+    frame.scrollTop += bounds.top + bounds.height / 2 - frame.getBoundingClientRect().top - frame.clientHeight / 2;
+    setViewedPage(page);
+  }
+
   function updateViewedPage() {
     const frame = paperFrameRef.current;
     if (!frame) return;
@@ -660,7 +670,7 @@ export default function Editor() {
         <div className="divider" tabIndex={0} onKeyDown={(event) => { if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) { event.preventDefault(); setSplit((value) => event.key === "Home" ? 30 : event.key === "End" ? 70 : Math.min(70, Math.max(30, value + (event.key === "ArrowLeft" ? -2 : 2)))); } }} role="separator" aria-orientation="vertical" aria-label="Resize editor and preview" aria-valuemin={30} aria-valuemax={70} aria-valuenow={Math.round(split)} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); setDraggingDivider(true); moveDivider(event.clientX); }} onPointerMove={(event) => { if (draggingDivider) moveDivider(event.clientX); }} onPointerUp={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); setDraggingDivider(false); }} onPointerCancel={() => setDraggingDivider(false)} />
 
         <div className="pane preview-pane">
-          <div className="pane-header"><div className="pane-title"><PanelsTopLeft size={15} /> Preview</div><div className="pane-actions"><span className="page-indicator">Page {viewedPage} of {pages.length}</span><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale - 0.1)} title="Zoom out" aria-label="Zoom out"><Minus size={13} /></button><button className="zoom-level" onClick={resetPreviewZoom} title="Fit preview to pane">{Math.round(paperScale * 100)}%</button><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale + 0.1)} title="Zoom in" aria-label="Zoom in"><Plus size={13} /></button></div></div>
+          <div className="pane-header"><div className="pane-title"><PanelsTopLeft size={15} /> Preview</div><div className="pane-actions"><PageJump page={viewedPage} total={pages.length} jump={jumpToPage} /><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale - 0.1)} title="Zoom out" aria-label="Zoom out"><Minus size={13} /></button><button className="zoom-level" onClick={resetPreviewZoom} title="Fit preview to pane">{Math.round(paperScale * 100)}%</button><button className="small-button zoom-button" onClick={() => setPreviewZoom(paperScale + 0.1)} title="Zoom in" aria-label="Zoom in"><Plus size={13} /></button></div></div>
           <div className={`paper-frame${panningPreview ? " is-panning" : ""}`} ref={paperFrameRef} title="Scroll to move · Ctrl/Cmd + scroll to zoom · Drag to pan" onScroll={updateViewedPage} onPointerDown={startPreviewPan} onPointerMove={movePreviewPan} onPointerUp={(event) => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); setPanningPreview(false); }} onPointerCancel={() => setPanningPreview(false)}><div className="paper-stack" style={{ width: `${210 * paperScale}mm`, height: `${(pages.length * 297 + Math.max(0, pages.length - 1) * 5.82) * paperScale}mm` }}><div className="paper-canvas" style={{ transform: `scale(${paperScale})` }}>{pages.map((page, index) => <article className="paper" key={index} aria-label={`Page ${index + 1}`} dangerouslySetInnerHTML={{ __html: page }} />)}</div></div></div>
         </div>
       </section>
