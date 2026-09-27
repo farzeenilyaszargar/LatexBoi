@@ -6,14 +6,15 @@ import { Palette, Check } from "lucide-react";
 export const THEMES = [
   { id: "light-green", name: "Light Green", note: "White & soft sage", colors: ["#f6f8f7", "#ffffff", "#24704f"] },
   { id: "dark-green", name: "Dark Green", note: "Charcoal & muted mint", colors: ["#171b1a", "#222825", "#90c9ad"] },
-  { id: "dark-academia", name: "Dark Academia", note: "Espresso & antique gold", colors: ["#201d19", "#2b2722", "#d8bb85"] },
-  { id: "night", name: "Night", note: "Deep navy & cool blue", colors: ["#101722", "#1a2432", "#7db4ff"] },
+  { id: "coffee", name: "Coffee", note: "Espresso & antique gold", colors: ["#201d19", "#2b2722", "#d8bb85"] },
+  { id: "night", name: "Night", note: "Dark academia after midnight", colors: ["#201d19", "#2b2722", "#d8bb85"] },
   { id: "light-academia", name: "Light Academia", note: "Paper white & scholarly blue", colors: ["#f6f7f9", "#ffffff", "#356ae6"] },
 ] as const;
 export type Theme = typeof THEMES[number]["id"];
 export function savedTheme(value: string | null): Theme {
   if (value === "light") return "light-green";
   if (value === "dark") return "dark-green";
+  if (value === "dark-academia") return "coffee";
   return THEMES.find(theme => theme.id === value)?.id ?? "light-academia";
 }
 
