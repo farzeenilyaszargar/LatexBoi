@@ -671,7 +671,7 @@ export default function Editor() {
       <header className="topbar">
         <div className="brand" title="Unleaf — Less overhead. More paper."><span className="brand-mark"><img className="brand-logo" src="/unleaf.svg" alt="" /></span><span>Unleaf</span></div>
         <div className="topbar-center"><span className="saved" role="status">{copyError ? "Copy blocked — use Ctrl/Cmd+C" : saveState}</span></div>
-        <div className="topbar-actions"><a className="product-hunt-badge" href="https://www.producthunt.com/products/unleaf?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-unleaf" target="_blank" rel="noopener noreferrer" aria-label="Unleaf on Product Hunt"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1263893&theme=neutral&t=1790671982970" alt="Unleaf - Research Papers Made Easy | Product Hunt" /></a><ThemePicker theme={theme} choose={setTheme} /><button className="primary-button" onClick={exportPdf}><Download size={16} /> Export PDF</button></div>
+        <div className="topbar-actions"><ThemePicker theme={theme} choose={setTheme} /><button className="primary-button" onClick={exportPdf}><Download size={16} /> Export PDF</button></div>
       </header>
 
       <section className={`workspace${draggingDivider ? " is-resizing" : ""}`} style={{ gridTemplateColumns: `minmax(0, ${split}fr) 8px minmax(0, ${100 - split}fr)` }}>
